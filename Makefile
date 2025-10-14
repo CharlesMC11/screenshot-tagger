@@ -15,8 +15,8 @@ main: main.sh.zwc dir
 workflow: workflow.workflow workflow.sh.zwc dir
 	$(symlink) $@.$@ ~/Library/Workflows/Applications/Folder\ Actions/$(SCRIPT_NAME).$@
 
-	$(symlink) $@.sh                   $(BIN_PATH)/$@.sh
-	$(symlink) $@.sh.zwc               $(BIN_PATH)/$@.sh.zwc
+	$(symlink) $@.sh     $(BIN_PATH)/$@.sh
+	$(symlink) $@.sh.zwc $(BIN_PATH)/$@.sh.zwc
 
 %.sh.zwc: %.sh
 	zcompile $<
