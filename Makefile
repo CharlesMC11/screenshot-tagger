@@ -1,6 +1,6 @@
 SHELL       := zsh
 
-SCRIPT_NAME := process_screenshots
+SCRIPT_NAME := add_metadata
 BIN_PATH    := ~/.local/bin/$(SCRIPT_NAME)
 
 symlink     := install -v -l as
@@ -12,17 +12,17 @@ main: main.sh.zwc dir
 	$(symlink) $< $(BIN_PATH)/$@.zwc
 	chmod +x $(BIN_PATH)/$@
 
-workflow: workflow.sh.zwc $(SCRIPT_NAME).workflow dir
-	$(symlink) $(SCRIPT_NAME).workflow ~/Library/Workflows/Applications/Folder\ Actions/$<
+workflow: workflow.workflow workflow.sh.zwc dir
+	$(symlink) $@.$@ ~/Library/Workflows/Applications/Folder\ Actions/$(SCRIPT_NAME).$@
 
-	$(symlink) $@.sh $(BIN_PATH)/$@.sh
-	$(symlink) $< $(BIN_PATH)/$<
+	$(symlink) $@.sh                   $(BIN_PATH)/$@.sh
+	$(symlink) $@.sh.zwc               $(BIN_PATH)/$@.sh.zwc
 
 %.sh.zwc: %.sh
 	zcompile $<
 
 dir:
-	if [[ -d $(BIN_PATH) ]]; then exit 0;\
+	if   [[ -d $(BIN_PATH) ]]; then exit 0;\
 	elif [[ -e $(BIN_PATH) ]]; then rm $(BIN_PATH);\
 	fi;\
 	mkdir $(BIN_PATH)

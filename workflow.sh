@@ -1,9 +1,9 @@
 #!/opt/homebrew/bin/zsh -f
-# A script for preparing `process_screenshots/main.sh`. It will be sourced by a
+# A script for preparing `add_metadata/main.sh`. It will be sourced by a
 # Folder Action
 
 readonly SCREENSHOTS_DIR=${HOME}/MyFiles/Pictures/Screenshots
-readonly PIPE=${SCREENSHOTS_DIR}/process_screenshots
+readonly PIPE=${SCREENSHOTS_DIR}/add_metadata
 
 readonly HOMEBREW_PREFIX=/opt/homebrew
 

@@ -1,4 +1,4 @@
-# process_screenshots
+# add_metadata
 
 A script that renames and adds certain metadata to screenshots taken on my
 Mac laptop. `main.sh` can be directly used in the terminal, while `workflow.sh` is
