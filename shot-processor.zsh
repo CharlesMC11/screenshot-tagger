@@ -6,7 +6,7 @@ setopt NO_UNSET
 setopt PIPE_FAIL
 setopt EXTENDED_GLOB
 
-readonly SCRIPT_NAME=${0:t2:r}
+readonly SCRIPT_NAME=${0:t}
 
 show_usage () {
     echo "usage: ${SCRIPT_NAME}\n\
