@@ -25,7 +25,7 @@ path=(
 ################################################################################
 
 if ! mkdir "$LOCK" 2>/dev/null; then
-    echo "Lock exists; script already in progress..." >&2
+    echo 'Lock exists; script already in progress...' >&2
     exit 1
 fi
 # Taking multiple screenshots in succession causes the `launchd` to trigger the
