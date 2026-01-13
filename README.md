@@ -1,18 +1,18 @@
 # Screenshot Tagger
 
-A Zsh-based automation suite for macOS that monitors a directory, renames screenshots based on their original capture timestamp, injects custom EXIF metadata, and archives the original files.
+A Zsh-based automation suite for macOS that monitors a screenshot directory, renames files based on capture timestamps, and injects professional photography metadata.
+
+## Motivation
+
+This project was originally intended to treat screenshots of video calls with friends as photos taken with a camera. By injecting specific EXIF metadata—such as hardware models and software versions—these files behave like standard digital photos when imported into professional cataloging tools like **Lightroom Classic** and **Capture One**.
 
 ## Features
 
-- Automated Monitoring: Uses macOS `launchd` to watch for new files added to the screenshots directory
-
-- Smart Renaming: Exctracts timestamps from filenames to create a standardized format: `YYMMDD_HHMMSS`.
-
-- Metadata Injection: Uses `Exiftool` to embed capture dates, hardware/software info, and custom tag files.
-
-- Automatic Archiving: Compresses original screenshots into a `.tar.gz` archive after processing to keep folders clean.
-
-- Race-Condition Projection: Implements a lockfile mechanism to prevent multiple `launchd` triggers from conflicting.
+- **Automated Monitoring**: Uses macOS `launchd` to watch a screenshot directory for new files.
+- **Photography Workflow**: Injects `Make`, `Model`, `Software`, and `DateTime` tags so screenshots are treated as camera imports.
+- **Smart Renaming**: Standardizes filenames to `YYMMDD_HHMMSS` based on the original capture time.
+- **Auto-Archiving**: Compresses original files into a `.tar.gz` archive after processing to maintain a clean workspace.
+- **Lock Protection**: Prevents race conditions when multiple screenshots are taken simultaneously.
 
 ## Requirements
 
