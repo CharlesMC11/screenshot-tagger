@@ -36,7 +36,7 @@ trap 'rm -rf "$LOCK"' EXIT
 
 sleep $EXECUTION_DELAY # Give time for all screenshots to be written to disk
 
-metadata-engine --verbose\
+tagger-engine --verbose\
     --input "${SCREENSHOTS_DIR}/.tmp"\
     --output "$SCREENSHOTS_DIR"\
     --tag "${ARG_FILES_DIR}/charlesmc.args"\

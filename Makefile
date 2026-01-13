@@ -2,8 +2,9 @@ SHELL               := zsh
 SCRIPT_NAME         := screenshot-tagger
 BIN_DIR             := $(HOME)/.local/bin/$(SCRIPT_NAME)
 
-SRC_ENGINE          := metadata-engine
-SRC_WATCHER         := screenshot-watcher
+ENGINE_NAME         := tagger-engine
+WATCHER_NAME        := screenshot-watcher
+
 PLIST_NAME_BASE     := screenshot_tagger.plist
 PLIST_NAME_TEMPLATE := $(PLIST_NAME_BASE).template
 PLIST_NAME          := $(USER).$(PLIST_NAME_BASE)
@@ -21,13 +22,13 @@ install: compile
 	fi
 	@mkdir -p $(BIN_DIR)
 
-	@$(INSTALL) -m 755 $(SRC_ENGINE).zsh      $(BIN_DIR)/$(SRC_ENGINE)
-	@$(INSTALL) -m 644 $(SRC_ENGINE).zsh.zwc  $(BIN_DIR)/$(SRC_ENGINE).zwc
+	@$(INSTALL) -m 755 $(ENGINE_NAME).zsh      $(BIN_DIR)/$(ENGINE_NAME)
+	@$(INSTALL) -m 644 $(ENGINE_NAME).zsh.zwc  $(BIN_DIR)/$(ENGINE_NAME).zwc
 
-	@$(INSTALL) -m 755 $(SRC_WATCHER).zsh     $(BIN_DIR)/$(SRC_WATCHER)
-	@$(INSTALL) -m 644 $(SRC_WATCHER).zsh.zwc $(BIN_DIR)/$(SRC_WATCHER).zwc
+	@$(INSTALL) -m 755 $(WATCHER_NAME).zsh     $(BIN_DIR)/$(WATCHER_NAME)
+	@$(INSTALL) -m 644 $(WATCHER_NAME).zsh.zwc $(BIN_DIR)/$(WATCHER_NAME).zwc
 
-compile: $(SRC_ENGINE).zwc $(SRC_WATCHER).zwc
+compile: $(ENGINE_NAME).zwc $(WATCHER_NAME).zwc
 
 start: $(PLIST_NAME)
 	@$(INSTALL) -m 644 $(PLIST_NAME) ~/Library/LaunchAgents/
