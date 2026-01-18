@@ -105,13 +105,17 @@ exiftool "-Directory=${output_dir}"          "-Filename<${new_filename_pattern}"
          '-RawFileName<FileName'             '-PreservedFileName<FileName'\
          -struct          -preserve          ${verbose_mode:+'-verbose'}\
          ${=arg_files}                       --\
-         ${==pending_screenshots}            || exit 3
+         ${==pending_screenshots}            || exit 4
 
-if tar -czf "${output_dir}/Screenshots_$(date +%y%m%d_%H%M%S).tar.gz"\
-    ${verbose_mode:+'-v'} --options gzip:compression-level=1\
+readonly archive_name="Screenshots_$(date +%y%m%d_%H%M%S).tar.gz"
+if tar -czf "${output_dir}/${archive_name}" --options gzip:compression-level=1\
     ${==pending_screenshots}; then
-        rm ${==pending_screenshots}
+
+    rm ${==pending_screenshots}
+    if (( verbose_mode )); then
+        echo "Created archive in '${output_dir}'"
+    fi
 else
-    echo "Failed to create archive in ${output_dir}" 1>&2
-    exit 4
+    echo "Failed to create archive in '${output_dir}'" 1>&2
+    exit 5
 fi
