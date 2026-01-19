@@ -9,6 +9,8 @@ setopt EXTENDED_GLOB
 setopt NULL_GLOB
 setopt NUMERIC_GLOB_SORT
 
+zmodload zsh/datetime
+
 readonly SCRIPT_NAME=${0:t}
 
 readonly DATE_FILTER_RE='<19-21><-9><-9>[^[:digit:]]#<-1><-9>[^[:digit:]]#<-3><-9>'
@@ -57,7 +59,7 @@ error_if_not_dir () {
 
 integer verbose_mode=0
 output_dir=$PWD
-timezone=$(date +%z)
+timezone=$(strftime %z)
 software=$(sw_vers --productVersion)
 hardware=$(system_profiler SPHardwareDataType | sed -En 's/^.*Model Name: //p')
 declare -Ua arg_files
