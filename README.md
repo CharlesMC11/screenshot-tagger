@@ -9,15 +9,14 @@ This project was originally intended to treat screenshots of video calls with fr
 ## Features
 
 - **Automated Monitoring**: Uses macOS `launchd` to watch a screenshot directory for new files.
-- **Photography Workflow**: Injects `Make`, `Model`, `Software`, and `DateTime` tags so screenshots are treated as camera imports.
+- **Photography Workflow**: Injects `Model`, `Software`, and `DateTime` tags so screenshots are treated as camera imports.
 - **Smart Renaming**: Standardizes filenames to `YYMMDD_HHMMSS` based on the original capture time.
-- **Auto-Archiving**: Compresses original files into a `.tar.gz` archive after processing to maintain a clean workspace.
+- **Auto-Archiving**: Compresses original files into a `.zip` archive after processing to maintain a clean workspace.
 - **Lock Protection**: Prevents race conditions when multiple screenshots are taken simultaneously.
 
 ## Requirements
 
 - `ExifTool`: Required for metadata manipulation.
-- `Gzip/libarchive`: Used for archiving processed files.
 - `envsubst`: Used during installation to configure the `.plist` file.
 
 ## Project Struture
