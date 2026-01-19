@@ -57,6 +57,9 @@ error_if_not_dir () {
 
 ################################################################################
 
+local timezone
+strftime -s timezone %z
+
 integer verbose_mode=0
 output_dir=$PWD
 timezone=$(strftime %z)
@@ -98,7 +101,9 @@ exiftool "-Directory=${output_dir}"          "-Filename<${new_filename_pattern}"
          ${=arg_files}                       --\
          ${==pending_screenshots}            || exit 4
 
-readonly archive_name="Screenshots_$(strftime %y%m%d_%H%M%S).tar.gz"
+local datetime
+strftime -s datetime %Y%m%d_%H%M%S
+readonly archive_name="Screenshots_${datetime}.tar.gz"
 if tar -czf "${output_dir}/${archive_name}" --options gzip:compression-level=1\
     ${==pending_screenshots}; then
 
