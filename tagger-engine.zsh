@@ -4,6 +4,8 @@
 setopt ERR_EXIT
 setopt NO_UNSET
 setopt PIPE_FAIL
+setopt CHASE_LINKS
+setopt WARN_CREATE_GLOBAL
 
 setopt EXTENDED_GLOB
 setopt NULL_GLOB

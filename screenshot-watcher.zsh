@@ -1,8 +1,12 @@
 #!/usr/bin/env -S zsh -f
 # A script for preparing `tagger-engine`. It will be called by `launchd`
 
+setopt CHASE_LINKS
 setopt ERR_EXIT
 setopt NO_UNSET
+setopt WARN_CREATE_GLOBAL
+setopt NO_NOTIFY
+setopt NO_BEEP
 
 readonly LOCK=${TMPDIR}${USER}.screenshot-tagger.lock
 
