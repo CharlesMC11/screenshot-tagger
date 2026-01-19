@@ -61,10 +61,9 @@ local timezone
 strftime -s timezone %z
 
 integer verbose_mode=0
-output_dir=$PWD
-timezone=$(strftime %z)
-software=$(sw_vers --productVersion)
-model=$(sysctl -n hw.model)
+local output_dir=$PWD
+local software=$(sw_vers --productVersion)
+local model=$(sysctl -n hw.model)
 typeset -Ua arg_files
 while (( $# )); do
     case $1 in
@@ -80,7 +79,7 @@ while (( $# )); do
     esac
 done
 
-typeset -Ua pending_screenshots
+local -Ua pending_screenshots
 readonly pending_screenshots=(${~FILENAME_FILTER_RE}.${~FILENAME_SORTING_RE} ${~FILENAME_FILTER_RE}*.${~FILENAME_SORTING_RE})
 if ! (( ${#pending_screenshots} )); then
     echo "No screenshots to process in '${PWD}/'" 1>&2
