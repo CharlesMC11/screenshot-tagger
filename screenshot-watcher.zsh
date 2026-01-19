@@ -27,7 +27,11 @@ path=(
 # amount of times. Checking for this lock in the `if` statement above ensures
 # that only the first instance of the script executes the rest of the script
 # body.
-{ trap 'rm -rf "$LOCK"' EXIT && mkdir "$LOCK" 2>/dev/null } || exit 1
+if mkdir "$LOCK" 2>/dev/null; then
+    trap 'rmdir "$LOCK"' EXIT
+else
+    exit 1
+fi
 
 sleep $EXECUTION_DELAY # Give time for all screenshots to be written to disk
 
