@@ -27,10 +27,10 @@ if ! mkdir "$LOCK" 2>/dev/null; then
     echo 'Lock exists; script already in progress...' >&2
     exit 1
 fi
-# Taking multiple screenshots in succession causes the `launchd` to trigger the
-# same amount of times. Checking for this lock in the `if` statement above
-# ensures that only the first instance of the script executes the rest of the
-# script body.
+# Taking multiple screenshots in succession causes `launchd` to trigger the same
+# amount of times. Checking for this lock in the `if` statement above ensures
+# that only the first instance of the script executes the rest of the script
+# body.
 trap 'rm -rf "$LOCK"' EXIT
 
 sleep $EXECUTION_DELAY # Give time for all screenshots to be written to disk
