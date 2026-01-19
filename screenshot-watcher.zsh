@@ -42,19 +42,21 @@ else
     exit 2
 fi
 
-result=$(tagger-engine --verbose --input "${INPUT_DIR}" --output "${OUTPUT_DIR}"\
-    -@ "${ARG_FILES_DIR}/charlesmc.args" -@ "${ARG_FILES_DIR}/screenshot.args" 2>&1)
-integer -r exit_status=$?
-readonly msg=$(print -- "$result" | tail -n 1)
+local engine_output
+engine_output=$(tagger-engine --verbose --input "${INPUT_DIR}"\
+    --output "${OUTPUT_DIR}" -@ "${ARG_FILES_DIR}/charlesmc.args"\
+    -@ "${ARG_FILES_DIR}/screenshot.args" 2>&1)
 
+integer -r exit_status=$?
 if (( exit_status == 0 )); then
     subtitle=Success
     sound=Glass
 else
-    subtitle="Failure ($exit_status)"
+    subtitle="Failure (Error: $exit_status)"
     sound=Basso
 fi
 
-osascript <<EOF &!
+readonly msg=$(print -- "$engine_output" | tail -n 1)
+osascript <<EOF
     display notification "${msg}" with title "Screenshot Tagger" subtitle "${subtitle}" sound name "${sound}"
 EOF
