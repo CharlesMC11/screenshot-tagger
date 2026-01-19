@@ -8,7 +8,9 @@ setopt WARN_CREATE_GLOBAL
 setopt NO_NOTIFY
 setopt NO_BEEP
 
-readonly LOCK=${TMPDIR}${USER}.screenshot-tagger.lock
+zmodload zsh/files
+
+readonly LOCK=${TMPDIR}${USER}.${0:t:r}.lock
 
 readonly HOMEBREW_PREFIX=/opt/homebrew
 
@@ -31,7 +33,7 @@ path=(
 # amount of times. Checking for this lock in the `if` statement above ensures
 # that only the first instance of the script executes the rest of the script
 # body.
-if mkdir "$LOCK" 2>/dev/null; then
+if mkdir -m 000 "$LOCK" 2>/dev/null; then
     trap 'rmdir "$LOCK"' EXIT
 else
     exit 1

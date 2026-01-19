@@ -12,8 +12,9 @@ setopt NULL_GLOB
 setopt NUMERIC_GLOB_SORT
 
 zmodload zsh/datetime
+zmodload zsh/files
 
-readonly SCRIPT_NAME=${0:t}
+readonly SCRIPT_NAME=${0:t:r}
 
 readonly DATE_FILTER_RE='<19-21><-9><-9>[^[:digit:]]#<-1><-9>[^[:digit:]]#<-3><-9>'
 readonly TIME_FILTER_RE='<-2><-9>[^[:digit:]]#<-5><-9>[^[:digit:]]#<-5><-9>'
@@ -106,12 +107,12 @@ local datetime
 strftime -s datetime %Y%m%d_%H%M%S
 readonly archive_name="Screenshots_${datetime}.zip"
 
-if dir=$(mktemp --directory -t "${USER}") &&\
-    ln ${verbose_mode:+-v} ${==pending_screenshots} "$dir"; then
-    trap 'rm -rf "$dir"' EXIT
+readonly tmpdir="${TMPDIR}${USER}.${SCRIPT_NAME}.${datetime}"
+if mkdir -m 700 "$tmpdir" && ln -f ${==pending_screenshots} "${tmpdir}/"; then
+    trap 'rm -rf "${dir}/"' EXIT
 
     ditto -${verbose_mode:+V}c -k --sequesterRsrc --zlibCompressionLevel 1\
-    "$dir" "${output_dir}/${archive_name}" && rm ${==pending_screenshots}
+    "${tmpdir}/" "${output_dir}/${archive_name}" && rm -f ${==pending_screenshots}
 
     if (( verbose_mode )); then
         print -- "Created archive: '${output_dir:t}/${archive_name}'"
