@@ -2,10 +2,10 @@ include .env
 
 SHELL               := zsh
 SCRIPT_NAME         := screenshot-tagger
-BIN_DIR             := $(HOME)/.local/bin/$(SCRIPT_NAME)
+export BIN_DIR      := $(HOME)/.local/bin/$(SCRIPT_NAME)
 
 ENGINE_NAME         := tagger-engine
-WATCHER_NAME        := screenshot-watcher
+export WATCHER_NAME := screenshot-watcher
 
 PLIST_NAME_BASE     := screenshot_tagger.plist
 PLIST_NAME_TEMPLATE := $(PLIST_NAME_BASE).template
