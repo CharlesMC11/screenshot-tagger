@@ -97,7 +97,7 @@ exiftool "-Directory=${output_dir}"          "-Filename<${new_filename_pattern}"
          '-RawFileName<FileName'             '-PreservedFileName<FileName'\
          -struct          -preserve          ${opts[--verbose]:+-verbose}\
          "${arg_files[@]}"                   --\
-         "${pending_screenshots[@]}"         || exit 4
+         "${pending_screenshots[@]}"         || {print -- 'ExifTool failed'; exit 4}
 
 local datetime; strftime -s datetime %Y%m%d_%H%M%S
 readonly archive_name="Screenshots_${datetime}.aar"
