@@ -103,7 +103,7 @@ local datetime; strftime -s datetime %Y%m%d_%H%M%S
 readonly archive_name="Screenshots_${datetime}.aar"
 
 readonly tmpdir="${TMPDIR}${USER}.${SCRIPT_NAME}.${datetime}"
-if mkdir -m 700 "$tmpdir" && ln -f "${pending_screenshots[@]}" "${tmpdir}/"; then
+if mkdir -m 700 "$tmpdir" && cp -f "${pending_screenshots[@]}" "${tmpdir}/"; then
     trap 'rm -rf "${tmpdir}/"' EXIT
 
     aa archive ${opts[--verbose]:+-v} -d "${tmpdir}/"\
