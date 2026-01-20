@@ -100,14 +100,14 @@ exiftool "-Directory=${output_dir}"          "-Filename<${new_filename_pattern}"
          "${pending_screenshots[@]}"         || exit 4
 
 local datetime; strftime -s datetime %Y%m%d_%H%M%S
-readonly archive_name="Screenshots_${datetime}.zip"
+readonly archive_name="Screenshots_${datetime}.aar"
 
 readonly tmpdir="${TMPDIR}${USER}.${SCRIPT_NAME}.${datetime}"
 if mkdir -m 700 "$tmpdir" && ln -f "${pending_screenshots[@]}" "${tmpdir}/"; then
     trap 'rm -rf "${tmpdir}/"' EXIT
 
-    ditto -c -k ${opts[--verbose]:+-V} --sequesterRsrc --zlibCompressionLevel 1\
-    "${tmpdir}/" "${output_dir}/${archive_name}" && rm -f "${pending_screenshots[@]}"
+    aa archive ${opts[--verbose]:+-v} -d "${tmpdir}/"\
+     -o "${output_dir}/${archive_name}" && rm -f "${pending_screenshots[@]}"
 
     if (( ${+opts[--verbose]} )); then
         print -- "Created archive: '${output_dir:t}/${archive_name}'"
