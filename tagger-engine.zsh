@@ -12,8 +12,10 @@ setopt NULL_GLOB
 setopt NUMERIC_GLOB_SORT
 
 zmodload zsh/datetime
+zmodload zsh/files
+zmodload zsh/zutil
 
-readonly SCRIPT_NAME=${0:t}
+readonly SCRIPT_NAME=${0:t:r}
 
 readonly DATE_FILTER_RE='<19-21><-9><-9>[^[:digit:]]#<-1><-9>[^[:digit:]]#<-3><-9>'
 readonly TIME_FILTER_RE='<-2><-9>[^[:digit:]]#<-5><-9>[^[:digit:]]#<-5><-9>'
@@ -28,23 +30,16 @@ readonly DATETIME_REPLACEMENT_RE='$1$2-$3-$4T$5:$6:$7'
 
 show_usage () {
     print -l -- "usage: ${SCRIPT_NAME}"\
-    "\t-v  --verbose"\
-    "\t-h  --help"\
-    "\t-i  --input    (default = current directory)"\
-    "\t-o  --output   (default = current directory)"\
-    "\t-tz --timezone (default = system timezone)"\
-    "\t-sw --software (default = system software)"\
-    "\t-hw --hardware (default = system hardware)"\
-    "\t-@  --argfile  arg files"
+    "\t-v --verbose"\
+    "\t-h --help"\
+    "\t-i --input    (default = current directory)"\
+    "\t-o --output   (default = current directory)"\
+    "\t-z --timezone (default = system timezone)"\
+    "\t-s --software (default = system software)"\
+    "\t-m --model    (default = system hardware)"\
+    "\t-@ --argfile  arg files"
 }
 
-error_on_invalid_option () {
-    print -u 2 -- "${SCRIPT_NAME}: invalid option -- $1"
-    show_usage
-    exit 1
-}
-
-# Exit with 2 if the arg is not a directory
 # $1: "Input" or "Output"
 # $2: An input or output directory
 error_if_not_dir () {
@@ -59,32 +54,34 @@ error_if_not_dir () {
 
 ################################################################################
 
-local timezone
-strftime -s timezone %z
+local -a arg_files
+local -AU opts
+zparseopts -D -E -M -A opts h=-help -help v=-verbose -verbose\
+    i:=-input    -input:       o:=-output    -output:\
+    m:=-model    -model:       s:=-software  -software:\
+    z:=-timezone -timezone:    @+:=arg_files -argfile+:=arg_files
 
-integer verbose_mode=0
-local output_dir=$PWD
-local software=$(sw_vers --productVersion)
-local model=$(sysctl -n hw.model)
-typeset -Ua arg_files
-while (( $# )); do
-    case $1 in
-        -h  | --help    ) show_usage; exit;;
-        -v  | --verbose ) verbose_mode=1; shift;;
-        -i  | --input   ) error_if_not_dir Input $2; cd "$2"; shift 2;;
-        -o  | --output  ) error_if_not_dir Output $2; output_dir=$2; shift 2;;
-        -tz | --timezone) timezone=$2; shift 2;;
-        -sw | --software) software=$2; shift 2;;
-        -hw | --hardware) model=$2; shift 2;;
-        -@  | --argfile ) arg_files+="-@ $2"; shift 2;;
-        *               ) error_on_invalid_option $1;;
-    esac
-done
+if (( ${+opts[--help]} )); then
+    show_usage
+    exit
+fi
+
+readonly input_dir=${opts[--input]:-$PWD}
+readonly output_dir=${opts[--output]:-$PWD}
+
+error_if_not_dir Input "$input_dir"
+error_if_not_dir Output "$output_dir"
+
+cd "$input_dir"
+
+readonly model=${opts[--model]:-$(sysctl -n hw.model)}
+readonly software=${opts[--software]:-$(sw_vers --productVersion)}
+readonly timezone=${opts[--timezone]:-$(strftime %z)}
 
 local -Ua pending_screenshots
 readonly pending_screenshots=(${~FILENAME_FILTER_RE}.${~FILENAME_SORTING_RE} ${~FILENAME_FILTER_RE}*.${~FILENAME_SORTING_RE})
-if ! (( ${#pending_screenshots} )); then
-    print -u 2 -- "No screenshots to process in '${PWD}/'"
+if (( ${#pending_screenshots} == 0 )); then
+    print -u 2 -- "No screenshots to process in '${input_dir}/'"
     exit 3
 fi
 
@@ -98,22 +95,21 @@ exiftool "-Directory=${output_dir}"          "-Filename<${new_filename_pattern}"
          '-MaxAvailHeight<ImageHeight'       '-MaxAvailWidth<ImageWidth'\
          "-Software=${software}"             "-Model=${model}"\
          '-RawFileName<FileName'             '-PreservedFileName<FileName'\
-         -struct          -preserve          ${verbose_mode:+-verbose}\
-         ${=arg_files}                       --\
-         ${==pending_screenshots}            || exit 4
+         -struct          -preserve          ${opts[--verbose]:+-verbose}\
+         "${arg_files[@]}"                   --\
+         "${pending_screenshots[@]}"         || exit 4
 
-local datetime
-strftime -s datetime %Y%m%d_%H%M%S
+local datetime; strftime -s datetime %Y%m%d_%H%M%S
 readonly archive_name="Screenshots_${datetime}.zip"
 
-if dir=$(mktemp --directory -t "${USER}") &&\
-    ln ${verbose_mode:+-v} ${==pending_screenshots} "$dir"; then
-    trap 'rm -rf "$dir"' EXIT
+readonly tmpdir="${TMPDIR}${USER}.${SCRIPT_NAME}.${datetime}"
+if mkdir -m 700 "$tmpdir" && ln -f "${pending_screenshots[@]}" "${tmpdir}/"; then
+    trap 'rm -rf "${tmpdir}/"' EXIT
 
-    ditto -${verbose_mode:+V}c -k --sequesterRsrc --zlibCompressionLevel 1\
-    "$dir" "${output_dir}/${archive_name}" && rm ${==pending_screenshots}
+    ditto -c -k ${opts[--verbose]:+-V} --sequesterRsrc --zlibCompressionLevel 1\
+    "${tmpdir}/" "${output_dir}/${archive_name}" && rm -f "${pending_screenshots[@]}"
 
-    if (( verbose_mode )); then
+    if (( ${+opts[--verbose]} )); then
         print -- "Created archive: '${output_dir:t}/${archive_name}'"
     fi
 else
