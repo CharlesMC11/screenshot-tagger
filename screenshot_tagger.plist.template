@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>${USER}.screenshot_tagger</string>
+    <string>me.${USER}.screenshot_tagger</string>
     <key>Program</key>
     <string>${BIN_DIR}/${WATCHER_NAME}</string>
     <key>WatchPaths</key>
