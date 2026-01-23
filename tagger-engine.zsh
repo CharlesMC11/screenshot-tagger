@@ -99,7 +99,7 @@ tagger-engine::main() {
         rm -f *.log
     }
 
-    trap _cleanup EXIT TERM
+    trap _cleanup EXIT INT TERM
 
     local datetime; strftime -s datetime %Y%m%d_%H%M%S
     readonly archive_name="Screenshots_${datetime}.aar"
