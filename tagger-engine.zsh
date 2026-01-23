@@ -79,7 +79,10 @@ tagger-engine::main() {
     readonly timezone=${opts[--timezone]:-$timezone}
 
     local -Ua pending_screenshots
-    readonly pending_screenshots=(${~FILENAME_FILTER_RE}.${~FILENAME_SORTING_RE} ${~FILENAME_FILTER_RE}*.${~FILENAME_SORTING_RE})
+    readonly pending_screenshots=( \
+        ${~FILENAME_FILTER_RE}.${~FILENAME_SORTING_RE} \
+        ${~FILENAME_FILTER_RE}*.${~FILENAME_SORTING_RE}
+    )
     if (( ${#pending_screenshots} == 0 )); then
         print -u 2 -- "${SCRIPT_NAME}: No screenshots to process in '${input_dir}/'"
         return ${EX_DATAERR:-65}
@@ -98,8 +101,10 @@ tagger-engine::main() {
 
     local datetime; strftime -s datetime %Y%m%d_%H%M%S
     readonly archive_name="Screenshots_${datetime}.aar"
-    aa archive ${opts[--verbose]:+-v} -d "$input_dir" -o "${output_dir}/${archive_name}"\
-        -include-path-list <(print -l -- "${pending_screenshots[@]}") 2>>'aa.log' 1>>'aa.log' &
+    aa archive ${opts[--verbose]:+-v} -a lz4 -d "$input_dir" \
+        -o "${output_dir}/${archive_name}"\
+        -include-path-list <(print -l -- "${pending_screenshots[@]}") \
+        2>>aa.log 1>>aa.log &
     integer -r aa_pid=$!
     bg_pids+=($aa_pid)
 
