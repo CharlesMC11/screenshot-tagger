@@ -63,7 +63,7 @@ clean:
 	-rm -f *.plist
 
 $(CONFIG_FILE).zwc: $(CONFIG_FILE)
-	zsh -n $<
+	@zsh -n $<
 	zcompile -U $<
 
 %.zwc: %.zsh
