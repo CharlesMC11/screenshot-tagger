@@ -141,6 +141,7 @@ tagger-engine::main() {
         print -- "${SCRIPT_NAME}: Created archive: '${output_dir:t}/${archive_name}'"
     fi
 
+    trap - EXIT INT TERM
     return 0
 }
 
