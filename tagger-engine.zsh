@@ -13,6 +13,7 @@ setopt NUMERIC_GLOB_SORT
 
 zmodload zsh/datetime
 zmodload zsh/files
+zmodload zsh/mapfile
 zmodload zsh/zutil
 
 readonly DATE_FILTER_RE='<19-21><-9><-9>[^[:digit:]]#<-1><-9>[^[:digit:]]#<-3><-9>'
@@ -114,17 +115,17 @@ tagger-engine::main() {
             '-RawFileName<FileName'             '-PreservedFileName<FileName'\
             -struct          -preserve          ${opts[--verbose]:+-verbose}\
             "${arg_files[@]}"                   --\
-            "${pending_screenshots[@]}"         2>>'et.log' 1>>'et.log' &
+            "${pending_screenshots[@]}"         2>>exiftool.log 1>>exiftool.log &
     integer -r et_pid=$!
     bg_pids+=($et_pid)
 
     if ! wait $aa_pid; then
-        print -l -u 2 -- "${SCRIPT_NAME}: Archiving failed" "$(<'aa.log')"
+        print -l -u 2 -- "${SCRIPT_NAME}: Archiving failed" "$mapfile[aa.log]"
         return ${EX_CANTCREAT:-70}
     fi
 
     if ! wait $et_pid; then
-        print -l -u 2 -- "${SCRIPT_NAME}: ExifTool failed" "$(<'et.log')"
+        print -l -u 2 -- "${SCRIPT_NAME}: ExifTool failed" "$mapfile[et.log]"
         return ${EX_SOFTWARE:-70}
     fi
 
