@@ -116,13 +116,13 @@ tagger-engine::main() {
     readonly new_datetime_pattern="\${${replacement_pattern}/${DATETIME_REPLACEMENT_RE}${timezone}/}"
 
     exiftool "-Directory=${output_dir}"          "-Filename<${new_filename_pattern}"\
-            "-AllDates<${new_datetime_pattern}" "-OffsetTime*=${timezone}"\
-            '-MaxAvailHeight<ImageHeight'       '-MaxAvailWidth<ImageWidth'\
-            "-Software=${software}"             "-Model=${model}"\
-            '-RawFileName<FileName'             '-PreservedFileName<FileName'\
-            -struct          -preserve          ${opts[--verbose]:+-verbose}\
-            "${arg_files[@]}"                   --\
-            "${pending_screenshots[@]}"         2>>exiftool.log 1>>exiftool.log &
+             "-AllDates<${new_datetime_pattern}" "-OffsetTime*=${timezone}"\
+             '-MaxAvailHeight<ImageHeight'       '-MaxAvailWidth<ImageWidth'\
+             "-Software=${software}"             "-Model=${model}"\
+             '-RawFileName<FileName'             '-PreservedFileName<FileName'\
+             -struct          -preserve          ${opts[--verbose]:+-verbose}\
+             "${arg_files[@]}"                   --\
+             "${pending_screenshots[@]}"         2>>exiftool.log 1>>exiftool.log &
     integer -r et_pid=$!
     bg_pids+=($et_pid)
 
