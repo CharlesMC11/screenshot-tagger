@@ -17,11 +17,9 @@ This project was originally intended to treat screenshots of video calls with fr
 ## Requirements
 
 - `ExifTool`: Required for metadata manipulation.
-- `envsubst`: Used during installation to configure the `.plist` file.
 
 ## Project Struture
 
-- `config.zsh`:
 - `tagger-engine.zsh`: The core logic for tagging, renaming, and archiving.
 - `screenshot-watcher.zsh`: A wrapper script that manages execution locks and calls the engine.
 - `screenshot_tagger.plist.template`: A launch agent template to automate the script via macOS `WatchPaths`.
