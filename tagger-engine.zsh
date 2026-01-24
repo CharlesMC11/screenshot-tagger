@@ -76,11 +76,6 @@ tagger-engine () {
 
     cd "$input_dir"
 
-    readonly model=${opts[--model]:-${HW_MODEL:-$(sysctl -n hw.model)}}
-    readonly software=${opts[--software]:-$(sw_vers --productVersion)}
-    local timezone; strftime -s timezone %z
-    readonly timezone=${opts[--timezone]:-$timezone}
-
     local -Ua pending_screenshots
     readonly pending_screenshots=( \
         ${~FILENAME_GLOB}.${~FILENAME_SORTING_GLOB} \
@@ -112,6 +107,11 @@ tagger-engine () {
         2>>aa.log 1>>aa.log &
     integer -r aa_pid=$!
     bg_pids+=($aa_pid)
+
+    readonly model=${opts[--model]:-$(sysctl -n hw.model)}
+    readonly software=${opts[--software]:-$(sw_vers --productVersion)}
+    local timezone; strftime -s timezone %z
+    readonly timezone=${opts[--timezone]:-$timezone}
 
     # PERL string replacement patterns that will be used by ExifTool
     readonly replacement_pattern="Filename;s/${DATETIME_RE}"
