@@ -27,8 +27,10 @@ readonly DATETIME_EXTRACTOR_RE="^.*?${DATE_EXTRACTOR_RE}\D*?${TIME_EXTRACTOR_RE}
 readonly FILENAME_REPLACEMENT_RE='$2$3$4_$5$6$7$8.%e'
 readonly DATETIME_REPLACEMENT_RE='$1$2-$3-$4T$5:$6:$7'
 
+readonly TAGGER_ENGINE_SCRIPT_NAME=${0:t:r}
+
 _tagger-engine::show_usage () {
-    print -l -- "usage: ${0:t:r}"\
+    print -l -- "usage: ${TAGGER_ENGINE_SCRIPT_NAME}"\
     "\t-v --verbose"\
     "\t-h --help"\
     "\t-i --input    (default = current directory)"\
@@ -52,7 +54,7 @@ _tagger-engine::error_if_not_dir () {
 
 ################################################################################
 
-tagger-engine::main() {
+tagger-engine () {
     local -a arg_files
     local -AU opts
     zparseopts -D -E -M -A opts h=-help -help v=-verbose -verbose\
@@ -146,5 +148,5 @@ tagger-engine::main() {
 }
 
 if [[ $ZSH_EVAL_CONTEXT == toplevel ]]; then
-    tagger-engine::main $@
+    tagger-engine $@
 fi
