@@ -137,14 +137,18 @@ tagger-engine () {
     # return 70: BSD EX_SOFTWARE
     wait $et_pid || _tagger-engine::err 70 "ExifTool failed" "$mapfile[${TMPDIR%/}/et.log]"
   } always {
-    integer status=$?
-    if (( $status > 0 )); then
-      kill $bg_pids &>/dev/null
-      return $status
+    integer -r status_code=$?
+
+    rm -f -- ${TMPPREFIX}* 2>/dev/null
+
+    if (( status_code == 0 )); then
+      rm -f -- "${pending_screenshots[@]}" ${TMPDIR%/}/*.log
+    elif (( status_code > 0 )); then
+      kill $bg_pids 2>/dev/null
+      return $status_code
     fi
   }
 
-  rm -f -- "${pending_screenshots[@]}" ${TMPDIR%/}/*.log
   (( ${+opts[--verbose]} )) && print -- "${TAGGER_ENGINE_NAME}: Created archive: '${output_dir:t}/${archive_name}'"
 
   return 0
