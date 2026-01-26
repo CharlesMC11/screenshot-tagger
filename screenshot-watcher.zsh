@@ -29,20 +29,21 @@ fi
 sleep $EXECUTION_DELAY  # Give time for all screenshots to be written to disk
 
 source "${BIN_DIR}/tagger-engine"
-tagger-engine::main --verbose --input "$INPUT_DIR" --output "$OUTPUT_DIR"\
-    -@ "${ARG_FILES_DIR}/charlesmc.args" -@ "${ARG_FILES_DIR}/screenshot.args"
+# autoload -Uz tagger-engine
+msg=$(tagger-engine --verbose --input "$INPUT_DIR" --output "$OUTPUT_DIR" --model "${HW_MODEL}" \
+  -@ "${ARG_FILES_DIR}/charlesmc.args" -@ "${ARG_FILES_DIR}/screenshot.args")
 
-integer status=$?
-if (( exit_status == 0 )); then
+integer -r status_code=$?
+if (( status_code == 0 )); then
   subtitle=Success
   sound=Glass
 else
-  subtitle="Failure (Error: $status)"
+  subtitle="Failure (Error: $status_code)"
   sound=Basso
 fi
 
 osascript <<EOF
-    display notification with title "Screenshot Tagger" subtitle "${subtitle}" sound name "${sound}"
+  display notification "${msg}" with title "Screenshot Tagger" subtitle "${subtitle}" sound name "${sound}"
 EOF
 
 exec {fd}>&-
