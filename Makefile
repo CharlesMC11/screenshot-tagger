@@ -14,6 +14,8 @@ PLIST_BASE              := screenshot_tagger.plist
 PLIST_NAME              := me.$(USER).$(PLIST_BASE)
 PLIST_PATH              := $(HOME)/Library/LaunchAgents/$(PLIST_NAME)
 
+SCREENCAPTURE_PREF      := com.apple.screencapture location
+
 ROOT_DIR                := /Volumes/Workbench
 export TMPDIR           := $(ROOT_DIR)/$(SCRIPT_NAME)/tmp
 export TMPPREFIX        := $(TMPDIR)/zsh-
@@ -46,12 +48,16 @@ $(BIN_DIR):
 
 start: $(PLIST_PATH) stop install
 	launchctl bootstrap gui/$(shell id -u) $<
+	@defaults write $(SCREENCAPTURE_PREF) -string "$(INPUT_DIR)"
+	@killall SystemUIServer
 
 $(PLIST_PATH): $(PLIST_BASE).template
 	@content=$$(<$<); print -r -- "$${(e)content}" >| $@
 
 stop:
 	-launchctl bootout gui/$(shell id -u) $(PLIST_PATH) 2>/dev/null
+	@defaults delete $(SCREENCAPTURE_PREF)
+	@killall SystemUIServer
 
 clean:
 	rm -f $(BIN_DIR)/*.zwc

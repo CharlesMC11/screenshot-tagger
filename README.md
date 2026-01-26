@@ -4,7 +4,7 @@ A Zsh-based automation suite for macOS on Apple Silicon. It monitors a screensho
 
 ## Motivation
 
-This project was originally intended to treat screenshots of video calls with my girlfriend as photos taken with a camera. By injecting specific EXIF metadata—such as hardware models and software versions, these files behave like standard digital photos when imported into tools such as **Lightroom Classic** and **Capture One**. Eventually, it evolved into a project for me to learn how to maximize resources available on Apple Silicon and Zsh.
+This project was originally inspired to find a way for image cataloging tools such as **Lightroom Classic** and **Capture One** to treat screenshots of video calls with my girlfriend as photos taken with a camera. Eventually, this also evolved into a project for me to learn how to better use resources available on Apple Silicon and Zsh.
 
 ## Performance Architecture
 
