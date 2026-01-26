@@ -114,8 +114,7 @@ tagger-engine () {
     -o "${output_dir}/${archive_name}"\
     -include-path-list =(print -l -- "${pending_screenshots[@]}") \
     &>|${TMPDIR%/}/aa.log &
-  integer -r aa_pid=$!
-  bg_pids+=($aa_pid)
+  integer -r aa_pid=$!; bg_pids+=($aa_pid)
 
   readonly model=${opts[--model]:-$(sysctl -n hw.model)}
   readonly software=${opts[--software]:-$(sw_vers --productVersion)}
@@ -138,8 +137,7 @@ tagger-engine () {
     "${arg_files[@]}" \
     -@ =(print -l -- "${pending_screenshots[@]}") \
     -- &>|${TMPDIR%/}/et.log &
-  integer -r et_pid=$!
-  bg_pids+=($et_pid)
+  integer -r et_pid=$!; bg_pids+=($et_pid)
 
   {
     # return 73: BSD EX_CANTCREAT
