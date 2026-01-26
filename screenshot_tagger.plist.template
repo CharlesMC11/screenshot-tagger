@@ -17,9 +17,13 @@
         <string>en_US.UTF-8</string>
 
         <key>PATH</key>
-        <string>${BIN_DIR}:${HOMEBREW_PREFIX}/bin:${PATH}</string>
+        <string>${HOMEBREW_PREFIX}/bin:/usr/bin:/bin:${BIN_DIR}:</string>
+        <key>FPATH</key>
+        <string>${FPATH}</string>
         <key>TMPDIR</key>
         <string>$TMPDIR</string>
+        <key>TMPPREFIX</key>
+        <string>$TMPPREFIX</string>
 
         <key>BIN_DIR</key>
         <string>$BIN_DIR</string>
