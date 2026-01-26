@@ -31,7 +31,7 @@ source "${BIN_DIR}/tagger-engine"
 tagger-engine::main --verbose --input "$INPUT_DIR" --output "$OUTPUT_DIR"\
     -@ "${ARG_FILES_DIR}/charlesmc.args" -@ "${ARG_FILES_DIR}/screenshot.args"
 
-integer -r exit_status=$?
+integer status=$?
 if (( exit_status == 0 )); then
   subtitle=Success
   sound=Glass
