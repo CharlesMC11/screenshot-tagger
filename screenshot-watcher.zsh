@@ -11,25 +11,25 @@ setopt NO_BEEP
 zmodload zsh/files
 zmodload zsh/system
 
+source "${BIN_DIR}/tagger-engine"
+
 ################################################################################
 
 integer fd
-exec {fd}>|"${LOCK_PATH}"
+exec {fd}>|"${LOCK_PATH}" && trap 'exec {fd}>&-' EXIT
 
 # Taking multiple screenshots in succession causes `launchd` to trigger the same
 # amount of times. Checking for this lock ensures that only the first instance
 # of the script executes the rest of the script body.
 if zsystem flock -t 0 -f $fd "${LOCK_PATH}"; then
-  print -- "Created lock in '${LOCK_PATH:h}/'"
+  _tagger-engine::log INFO "Lock created in '${LOCK_PATH:h}/'; starting..."
 else
-  print -u 2 -- "${0:t:r}: Lock exists in '${LOCK_PATH:h}/'; exiting..."
-  exit 75  # BSD EX_TEMPFAIL
+  # return 75: BSD EX_TEMPFAIL
+  _tagger-engine::err 75 "Lock exists in '${LOCK_PATH:h}/'; exiting..."
 fi
 
 sleep $EXECUTION_DELAY  # Give time for all screenshots to be written to disk
 
-source "${BIN_DIR}/tagger-engine"
-# autoload -Uz tagger-engine
 msg=$(tagger-engine --verbose --input "$INPUT_DIR" --output "$OUTPUT_DIR" --model "${HW_MODEL}" \
   -@ "${ARG_FILES_DIR}/charlesmc.args" -@ "${ARG_FILES_DIR}/screenshot.args")
 
@@ -38,12 +38,13 @@ if (( status_code == 0 )); then
   subtitle=Success
   sound=Glass
 else
-  subtitle="Failure (Error: $status_code)"
+  subtitle="Failure (Exit Code: $status_code)"
   sound=Basso
 fi
 
 osascript <<EOF
-  display notification "${msg}" with title "Screenshot Tagger" subtitle "${subtitle}" sound name "${sound}"
+  display notification "${msg#*: }" \
+  with title "Screenshot Tagger" \
+  subtitle "${subtitle}" \
+  sound name "${sound}"
 EOF
-
-exec {fd}>&-

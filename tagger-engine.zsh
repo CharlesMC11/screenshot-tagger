@@ -157,7 +157,11 @@ tagger-engine () {
     fi
   }
 
-  (( ${+opts[--verbose]} )) && _tagger-engine::log INFO "Created archive: '${output_dir:t}/${archive_name}'"
+  if (( ${+opts[--verbose]} )); then
+    _tagger-engine::log INFO \
+      "Processed ${#pending_screenshots} screenshot(s)." \
+      "'${input_dir:t2}/' → '${output_dir:t2}/'"
+  fi
 
   return 0
 }
