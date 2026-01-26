@@ -29,14 +29,15 @@ export EXECUTION_DELAY  :=0.1
 export THROTTLE_INTERVAL:=1
 
 INSTALL                 := install -pv -m 755
+UNINSTALLER             := $(BIN_DIR)/uninstall
 
 .PHONY: all install start stop uninstall reinstall clean
 
 all: start
 
-install: $(BIN_DIR)/$(ENGINE_NAME) $(BIN_DIR)/$(WATCHER_NAME)
+install: $(BIN_DIR)/$(ENGINE_NAME) $(BIN_DIR)/$(WATCHER_NAME) $(UNINSTALLER) | $(TMPDIR) $(LOG_DIR)
 
-$(BIN_DIR)/%: %.zsh | $(BIN_DIR) $(LOG_DIR) $(TMPDIR)
+$(BIN_DIR)/%: %.zsh | $(BIN_DIR)
 	@$(INSTALL) $< $@
 	@zcompile -U $@
 
@@ -48,7 +49,7 @@ $(BIN_DIR):
 
 start: $(PLIST_PATH) stop install
 	launchctl bootstrap gui/$(shell id -u) $<
-	@defaults write $(SCREENCAPTURE_PREF) -string "$(INPUT_DIR)"
+	defaults write $(SCREENCAPTURE_PREF) -string "$(INPUT_DIR)" 2>/dev/null
 	@killall SystemUIServer
 
 $(PLIST_PATH): $(PLIST_BASE).template
@@ -56,7 +57,7 @@ $(PLIST_PATH): $(PLIST_BASE).template
 
 stop:
 	-launchctl bootout gui/$(shell id -u) $(PLIST_PATH) 2>/dev/null
-	@defaults delete $(SCREENCAPTURE_PREF)
+	-defaults delete $(SCREENCAPTURE_PREF) 2>/dev/null
 	@killall SystemUIServer
 
 clean:
@@ -66,6 +67,10 @@ clean:
 uninstall: stop
 	rm -rf $(BIN_DIR)
 	rm -f $(PLIST_PATH)
+
+$(UNINSTALLER): | $(BIN_DIR)
+	print -l -- '#!/bin/sh' 'make uninstall -C $(shell pwd)' >$@
+	@chmod 755 $@
 
 status:
 	@launchctl list | grep $(USER) 2>/dev/null
