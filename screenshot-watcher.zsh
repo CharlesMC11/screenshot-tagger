@@ -21,11 +21,11 @@ if mkdir -m 200 "$LOCK_PATH" 2>/dev/null; then
     trap 'rmdir "$LOCK_PATH"' EXIT INT TERM
     print -- "Created lock in '${LOCK_PATH:h}/'"
 else
-    print -u 2 -- "Lock exists in '${LOCK_PATH:h}/'; exiting..."
-    exit 75  # BSD EX_TEMPFAIL
+  print -u 2 -- "${0:t:r}: Lock exists in '${LOCK_PATH:h}/'; exiting..."
+  exit 75  # BSD EX_TEMPFAIL
 fi
 
-sleep $EXECUTION_DELAY # Give time for all screenshots to be written to disk
+sleep $EXECUTION_DELAY  # Give time for all screenshots to be written to disk
 
 source "${BIN_DIR}/tagger-engine"
 tagger-engine::main --verbose --input "$INPUT_DIR" --output "$OUTPUT_DIR"\
@@ -33,11 +33,11 @@ tagger-engine::main --verbose --input "$INPUT_DIR" --output "$OUTPUT_DIR"\
 
 integer -r exit_status=$?
 if (( exit_status == 0 )); then
-    subtitle=Success
-    sound=Glass
+  subtitle=Success
+  sound=Glass
 else
-    subtitle="Failure (Error: $exit_status)"
-    sound=Basso
+  subtitle="Failure (Error: $status)"
+  sound=Basso
 fi
 
 osascript <<EOF
