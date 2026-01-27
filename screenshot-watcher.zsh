@@ -18,9 +18,6 @@ source "${BIN_DIR}/tagger-engine"
 integer fd
 exec {fd}>|"${LOCK_PATH}" && trap 'exec {fd}>&-' EXIT
 
-# Taking multiple screenshots in succession causes `launchd` to trigger the same
-# amount of times. Checking for this lock ensures that only the first instance
-# of the script executes the rest of the script body.
 if zsystem flock -t 0 -f $fd "${LOCK_PATH}"; then
   _tagger-engine::log INFO "Lock created in '${LOCK_PATH:h}/'; starting..."
 else
