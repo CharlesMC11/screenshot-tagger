@@ -1,6 +1,7 @@
 .DELETE_ON_ERROR:
 
-export SHELL            := $(which zsh)
+export SHELL            := $(shell which zsh)
+.SHELLFLAGS             := -fc
 
 CONFIGS                 := Makefile
 
@@ -72,7 +73,8 @@ $(UNINSTALLER): $(CONFIGS) | $(BIN_DIR)/.dirstamp
 		'rm -f $(PLIST_PATH)' > $@
 	@chmod 755 $@
 
-install: check-ram-disk $(BIN_DIR)/$(ENGINE_NAME) $(BIN_DIR)/$(WATCHER_NAME) $(UNINSTALLER) | $(TMPDIR) $(INPUT_DIR) $(LOG_DIR)
+install: check-ram-disk $(BIN_DIR)/$(ENGINE_NAME) $(BIN_DIR)/$(WATCHER_NAME) \
+	$(UNINSTALLER) | $(TMPDIR) $(INPUT_DIR) $(LOG_DIR)
 
 start: $(PLIST_PATH) stop install
 	launchctl bootstrap gui/$(shell id -u) $<
