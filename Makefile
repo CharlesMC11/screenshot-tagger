@@ -39,7 +39,7 @@ export THROTTLE_INTERVAL:=1
 INSTALL                 := install -pv -m 755
 UNINSTALLER             := $(BIN_DIR)/uninstall
 
-.PHONY: all install start stop uninstall clean status open-log clear-log check-ram-disk
+.PHONY: all install start stop uninstall clean status open-log clean-log check-ram-disk
 
 all: start
 
@@ -101,5 +101,5 @@ status:
 open-log:
 	@open $(LOG_FILE)
 
-clear-log:
+clean-log:
 	@print -- >| $(LOG_FILE)
