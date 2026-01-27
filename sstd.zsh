@@ -41,7 +41,7 @@ fi
 
 print -- "${=msg}"
 osascript <<EOF
-  display notification "${msg#*: }" \
+  display notification "${(q)msg#*: }" \
   with title "Screenshot Tagger" \
   subtitle "${subtitle}" \
   sound name "${sound}"
