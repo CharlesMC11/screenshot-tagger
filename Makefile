@@ -31,7 +31,8 @@ PLIST_PATH              := $(HOME)/Library/LaunchAgents/$(PLIST_NAME)
 
 SCREENCAPTURE_PREF      := com.apple.screencapture location
 
-export HW_MODEL         := $(shell system_profiler SPHardwareDataType | sed -En 's/^.*Model Name: //p')
+export HW_MODEL         := $(shell system_profiler SPHardwareDataType | \
+							sed -En 's/^.*Model Name: //p')
 
 export EXECUTION_DELAY  :=0.1
 export THROTTLE_INTERVAL:=1
