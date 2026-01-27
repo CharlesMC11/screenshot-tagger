@@ -34,6 +34,6 @@ This project was originally inspired by finding a way for image cataloging tools
 The project includes a `Makefile` for streamlined setup:
 
 ```zsh
-make install  # Compiles scripts and moves them into `$(BIN_DIR)$`
+make install  # Compiles scripts and moves them into `$(BIN_DIR)`
 make start    # Generates the `.plist` and launches the agent
 ```
