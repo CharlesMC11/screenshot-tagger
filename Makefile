@@ -44,9 +44,10 @@ UNINSTALLER             := $(BIN_DIR)/uninstall
 all: start
 
 check-ram-disk:
+# return 78: BSD EX_CONFIG
 	@if [[ ! -d $(ROOT_DIR) ]]; then \
 		print -- '$(ROOT_DIR) is not loaded'; \
-		exit 1; \
+		exit 78; \
 	fi
 
 $(TMPDIR) $(INPUT_DIR) $(LOG_DIR):
