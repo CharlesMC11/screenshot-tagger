@@ -1,8 +1,7 @@
 *.plist
+!template.plist
 *.zwc
 
 .vscode/
 
 .DS_Store
-
-config.zsh
