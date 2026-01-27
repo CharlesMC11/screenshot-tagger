@@ -80,7 +80,7 @@ install: check-ram-disk $(BIN_DIR)/$(ENGINE_NAME) $(BIN_DIR)/$(WATCHER_NAME) \
 
 start: $(PLIST_PATH) stop install
 	launchctl bootstrap gui/$(shell id -u) $<
-	defaults write $(SCREENCAPTURE_PREF) -string "$(INPUT_DIR)"
+	defaults write $(SCREENCAPTURE_PREF) -string '$(INPUT_DIR)'
 	@killall SystemUIServer
 
 stop:
