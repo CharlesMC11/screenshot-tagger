@@ -70,7 +70,7 @@ $(PLIST_PATH): $(PLIST_BASE).template Makefile
 $(UNINSTALLER): $(CONFIGS) | $(BIN_DIR)/.dirstamp
 	@print -l -- \
 		'#!/bin/sh' \
-		'launchctl bootout gui/$$(id -u) $(PLIST_PATH) 2>/dev/null' \
+		'launchctl bootout gui/$(shell id -u) $(PLIST_PATH) 2>/dev/null' \
 		'rm -rf $(BIN_DIR)' \
 		'rm -f $(PLIST_PATH)' > $@
 	@chmod 755 $@
