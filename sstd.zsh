@@ -50,12 +50,12 @@ _sst::help() {
 _sst::log() {
   readonly level=${(U)1}
   shift
-  local datetime; strftime -s datetime '%Y-%m-%d %H:%M:%S'
+  local datetime; strftime -s datetime '%F %T%z'
 
   integer fd=1
   [[ $level == (WARN|ERROR) ]] && fd=2
 
-  print -l -u $fd -- "[$datetime] [$level] ${SCRIPT_NAME}: $@"
+  print -u $fd -f "[%s]\t[%s]\t[%s]\t%s\n" -- "$datetime" "${SCRIPT_NAME}:$$" "$level" "$*"
 }
 
 # Print an error message, then return a status code.
