@@ -30,6 +30,12 @@
         <string>$LOCK_PATH</string>
         <key>ARG_FILES_DIR</key>
         <string>$ARG_FILES_DIR</string>
+        <key>SERVICE_NAME</key>
+        <string>$SERVICE_NAME</string>
+        <key>AA_LOG</key>
+        <string>$AA_LOG</string>
+        <key>EXIFTOOL_LOG</key>
+        <string>$EXIFTOOL_LOG</string>
 
         <key>HW_MODEL</key>
         <string>$HW_MODEL</string>

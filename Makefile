@@ -23,10 +23,11 @@ export TMPPREFIX		:= $(TMPDIR)/zsh-$(SERVICE_NAME)-
 export LOCK_PATH		:= $(TMPDIR)/$(SERVICE_NAME).lock
 export ARG_FILES_DIR	:= $(HOME)/.local/share/exiftool
 export LOG_FILE			:= $(HOME)/Library/Logs/$(RDNN).log
+export AA_LOG			:= $(TMPDIR)/aa.log
+export EXIFTOOL_LOG		:= $(TMPDIR)/exiftool.log
 
 # Tool Configuration
-export MAIN_NAME		:= $(SERVICE_NAME)
-export AGENT_NAME		:= $(MAIN_NAME)d
+export AGENT_NAME		:= $(SERVICE_NAME)d
 PLIST_TEMPLATE			:= $(SERVICE_NAME).plist.template
 export PLIST_NAME		:= $(RDNN).plist
 PLIST_PATH				:= $(HOME)/Library/LaunchAgents/$(PLIST_NAME)
@@ -63,7 +64,7 @@ $(BIN_DIR)/.dirstamp:
 	fi
 	@mkdir -p "$(BIN_DIR)" && touch "$@"
 
-$(BIN_DIR)/%: %.zsh $(CONFIGS) | $(BIN_DIR)/.dirstamp
+$(BIN_DIR)/%: src/%.zsh $(CONFIGS) | $(BIN_DIR)/.dirstamp
 	@$(INSTALL) "$<" "$@"
 	@zcompile -U "$@"
 
