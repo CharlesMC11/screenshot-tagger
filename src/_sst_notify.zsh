@@ -1,10 +1,10 @@
-sst-notify() {
-  integer -r status_code=$1
-  if (( status_code == 0 )); then
+_sst_notify() {
+  integer -r code=$1
+  if (( code == 0 )); then
     subtitle='📷 Success'
     sound=Glass
   else
-    subtitle="⚠️ Failure: $status_code"
+    subtitle="⚠️ Failure: $code"
     sound=Basso
   fi
 

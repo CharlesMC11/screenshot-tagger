@@ -30,9 +30,9 @@ float -r EXECUTION_DELAY=@@EXECUTION_DELAY@@
 ################################################################################
 
 fpath=('@@FUNC_DIR@@')
-autoload -Uz _cmc_log _cmc_err sst-on-exit sst-notify sst
+autoload -Uz _cmc_log _cmc_err _sst _sst_notify _sst_on_exit
 
-trap 'sst-on-exit' EXIT INT TERM
+trap '_sst_on_exit' EXIT INT TERM
 
 [[ -d $TMPDIR ]] || mkdir -p "$TMPDIR"
 
@@ -44,8 +44,8 @@ if zsystem flock -t 0 -f $fd "$LOCK_PATH"; then
 
   sleep $EXECUTION_DELAY  # Give time for all screenshots to be written to disk
 
-  sst
-  sst-notify $?
+  _sst
+  _sst_notify $?
 else
   # return 75: BSD EX_TEMPFAIL
   _cmc_err 75 "Execution lock; exiting..."

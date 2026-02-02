@@ -1,4 +1,4 @@
-sst() {
+_sst() {
   cd "$INPUT_DIR"
 
   local -Ua pending_screenshots
@@ -53,7 +53,7 @@ sst() {
       _cmc_log INFO 'Archiving and tagging successful'
 
       rm -f -- "${(@)pending_screenshots}"
-      : >!"$PENDING_LIST" >!"$AA_my-LOG" >!"$EXIFTOOL_my-LOG"
+      : >!"$PENDING_LIST" >!"$AA_LOG" >!"$EXIFTOOL_LOG"
 
       _cmc_log INFO "Processed ${num_pending} ${unit}"
     elif (( status_code > 0 )); then
