@@ -1,63 +1,93 @@
 _sst() {
-  cd "$INPUT_DIR"
-
-  local -Ua pending_screenshots
-  readonly pending_screenshots=( *.png(nOm.N) )
-  integer -r num_pending=${#pending_screenshots}
-  if (( num_pending == 0 )); then
-    # return 66: BSD EX_NOINPUT
-    _cmc_err 66 "No screenshots to process in '${INPUT_DIR}/'"
-  fi
-  local unit=screenshot
-  if (( num_pending > 1 )); then
-    unit+=s
-  fi
-  _cmc_log INFO "Processing ${num_pending} ${unit}..."
-  print -l -- "${(@)pending_screenshots}" >|"$PENDING_LIST"
-
-  local -Ua bg_pids
+  : >!"$PENDING_LIST" >!"$PROCESSED_LIST" >!"$EXIFTOOL_LOG" >!"$AA_LOG"
 
   readonly current_month="${(%):-%D{%Y-%m}"
-
-  readonly archive_name="Screenshots_${current_month}.aar"
-  local aa_cmd=archive
-  [[ -f $archive_name ]] && aa_cmd=append
-
-  _cmc_log INFO 'Archiving original files in the background...'
-  "$AA" $aa_cmd -v -a lz4 -d "$INPUT_DIR" -o "${OUTPUT_DIR}/${archive_name}"\
-    -include-path-list "$PENDING_LIST" &>|"$AA_LOG" &
-  integer -r aa_pid=$!; bg_pids+=($aa_pid)
-
-  _cmc_log INFO 'Injecting metadata in the background...'
-  "$EXIFTOOL" -o "${OUTPUT_DIR}/${current_month}/" -struct -preserve -verbose \
-    '-RawFileName<FileName'             '-PreservedFileName<FileName' \
-    '-MaxAvailHeight<ImageHeight'       '-MaxAvailWidth<ImageWidth' \
-    "-Model=${HW_MODEL}"                "-Software=${OS_VER}" \
-    "-OffsetTime*=${(%):-%D{%z}"        '-AllDates<FileModifyDate' \
-    -d '%y%m%d_%H%M%S'                  '-Filename<${FileModifyDate}%-c.%e' \
-    -@ "${ARG_FILES_DIR}/charlesmc.args" \
-    -@ "${ARG_FILES_DIR}/screenshot.args" \
-    --  ${(@)pending_screenshots}       &>|"$EXIFTOOL_LOG" &
-  integer -r et_pid=$!; bg_pids+=($et_pid)
+  readonly exiftool_args=(
+    -stay_open True -@ "$PENDING_LIST" -common_args -struct -preserve -verbose
+    -o "${OUTPUT_DIR}/${current_month}/"
+    '-RawFileName<FileName'             '-PreservedFileName<FileName'
+    '-MaxAvailHeight<ImageHeight'       '-MaxAvailWidth<ImageWidth'
+    "-Model=${HW_MODEL}"                "-Software=${OS_VER}"
+    "-OffsetTime*=${(%):-%D{%z}"        '-AllDates<FileModifyDate'
+    -d '%y%m%d_%H%M%S'                  '-Filename<${FileModifyDate}%-c.%e'
+    -@ "${ARG_FILES_DIR}/charlesmc.args"
+    -@ "${ARG_FILES_DIR}/screenshot.args"
+  )
 
   {
-    _cmc_log DEBUG 'Waiting for background tasks to finish...'
-    # return 73: BSD EX_CANTCREAT
-    wait $aa_pid || _cmc_err 73 "Apple Archive Failed: ${(j: ⏎ :)${(f)mapfile[$AA_LOG]}}"
-    # return 70: BSD EX_SOFTWARE
-    wait $et_pid || _cmc_err 70 "ExifTool Failed: ${(j: ⏎ :)${(f)mapfile[$EXIFTOOL_LOG]}}"
+    "$EXIFTOOL" "${(@)exiftool_args}" >>!"$EXIFTOOL_LOG" 2>&1 &
+    integer -r et_pid=$!
+
+    local message="${SERVICE_NAME} BEGIN"
+    print -l -- -echo4 "$message" -execute >!"$PENDING_LIST"
+
+    integer timeout=60
+    while ! grep -q -e "$message" "$EXIFTOOL_LOG" &>/dev/null; do
+      if (( timeout-- <= 0 )); then
+        # return 69: BSD EX_UNAVAILABLE
+        _cmc_err 69 "ExifTool could not be ready in time"
+      fi
+
+      _cmc_log DEBUG 'Waiting for ExifTool to be ready...'
+      sleep 0.1
+    done
+    _cmc_log INFO "ExifTool:${et_pid} started"
+
+    integer count=0
+    if ! while IFS= read -r -t -u 0 file; do
+      if [[ -z $file ]]; then
+        _cmc_log DEBUG 'Skipping empty filename'
+        continue
+      fi
+
+      _cmc_log INFO "Submitting: '${file:t}'"
+      print -l -- "$file" '-execute' >>!"$PENDING_LIST"
+      (( ++count ))
+    done; then
+      # return 66: BSD EX_NOINPUT
+      _cmc_err 66 "No screenshots to process: '${INPUT_DIR}/'"
+    fi
+
+    message="${SERVICE_NAME} END"
+    print -l -- -echo4 "$message" -execute >>!"$PENDING_LIST"
+    while ! grep -q -e "$message" "$EXIFTOOL_LOG" &>/dev/null; do
+      _cmc_log DEBUG 'Waiting for ExifTool to finish processing...'
+      sleep 0.1
+    done
+    print -l -- '-stay_open' 'False' >>!"$PENDING_LIST"
+
+    local unit=screenshot
+    if (( count > 1 )); then
+      unit+=s
+    fi
+    _cmc_log INFO "Submitted ${count} ${unit} to ExifTool:${et_pid}"
+    grep -q "$INPUT_DIR" "$PENDING_LIST" >! "${TMPDIR}/processed.txt"
+
+    readonly archive_name="Screenshots_${current_month}.aar"
+    local aa_cmd=archive
+    if [[ -f $archive_name ]]; then
+      aa_cmd=update
+    fi
+
+    _cmc_log INFO 'Archiving original files...'
+    "$AA" $aa_cmd -v -a lz4 -d "$INPUT_DIR" -o "${OUTPUT_DIR}/${archive_name}"\
+      -include-path-list "${TMPDIR}/processed.txt" &>!"$AA_LOG" || \
+      _cmc_err 73 "Apple Archive Failed: ${(j: ⏎ :)${(f)mapfile[$AA_LOG]}}"
+      # return 73: BSD EX_CANTCREAT
   } always {
     integer -r status_code=$?
 
+    _cmc_log DEBUG "Status Code: ${status_code}"
+
     if (( status_code == 0 )); then
-      _cmc_log INFO 'Archiving and tagging successful'
+      : >!"$PENDING_LIST" >!"$EXIFTOOL_LOG"
 
-      rm -f -- "${(@)pending_screenshots}"
-      : >!"$PENDING_LIST" >!"$AA_LOG" >!"$EXIFTOOL_LOG"
+      # rm -f "${(f)${mapfile[${TMPDIR}/processed.txt]}}" || \
+      #   _cmc_log WARN "Failed to remove original screenshots"
 
-      _cmc_log INFO "Processed ${num_pending} ${unit}"
+      _cmc_log INFO "Processed ${count} ${unit}"
     elif (( status_code > 0 )); then
-      kill ${(@)bg_pids} 2>/dev/null
+      kill $et_pid 2>/dev/null
       return $status_code
     fi
   }
