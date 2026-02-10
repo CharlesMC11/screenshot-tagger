@@ -1,5 +1,5 @@
 _sst() {
-  : >!"$PENDING_LIST" >!"$PROCESSED_LIST" >!"$EXIFTOOL_LOG" >!"$AA_LOG"
+  : >!"$PROCESSED_LIST" >!"$EXIFTOOL_LOG" >!"$AA_LOG"
 
   readonly current_month="${(%):-%D{%Y-%m}"
   readonly exiftool_args=(
