@@ -1,9 +1,22 @@
 _sst() {
-  : >!"$PROCESSED_LIST" >!"$EXIFTOOL_LOG" >!"$AA_LOG"
+  : >!"$LOG_FILE" >!"$PROCESSED_LIST" >!"$EXIFTOOL_LOG" >!"$AA_LOG"
+
+  local -Ua pending_screenshots
+  pending_screenshots=( "${(f)$(cat -)}" )
+  integer -r pending_count=${#pending_screenshots}
+
+  if (( pending_count == 0 )); then
+    # return 66: BSD EX_NOINPUT
+    _cmc_err 66 "No screenshots to process: '${INPUT_DIR:A}/'"
+  fi
+  local unit='screenshot'
+  if (( pending_count > 1 )); then unit+='s'; fi
+
 
   local -r current_month="${(%):-%D{%Y-%m}"
+  local -r archive_name="Screenshots_${current_month}.aar"
   local -r exiftool_args=(
-    -stay_open True -@ "$PENDING_LIST" -common_args -struct -preserve -verbose
+    -struct -preserve -verbose
     -o "${OUTPUT_DIR}/${current_month}/"
     '-RawFileName<FileName'             '-PreservedFileName<FileName'
     '-MaxAvailHeight<ImageHeight'       '-MaxAvailWidth<ImageWidth'
@@ -14,66 +27,56 @@ _sst() {
     -@ "${ARG_FILES_DIR}/screenshot.args"
   )
 
-  "$EXIFTOOL" "${(@)exiftool_args}" &>>!"$EXIFTOOL_LOG" &
-  integer -r et_pid=$!
-  _cmc_log DEBUG "Started ExifTool in the backround (PID: ${et_pid})"
-
-  exec {pending_fd}>>!"$PENDING_LIST"
-  exec {processed_fd}>>!"$PROCESSED_LIST"
-
-  print -l -u $pending_fd -- '-echo2' 'ExifTool STARTED'
-
+  _cmc_log INFO "Processing ${pending_count} ${unit}"
   {
-    integer count=0
-    if ! while IFS= read -r -t -u 0 file; do
-      if [[ -z $file ]]; then
-        _cmc_log DEBUG 'Skipping empty filename'
-        continue
-      fi
+    if (( pending_count <= 15 )); then
+      _cmc_log INFO 'Processing serially'
 
-      _cmc_log INFO "Submitting: '${file:t}'"
-      print -l -u $pending_fd -- "$file" '-execute'
-      print -u $processed_fd -- "${file:t}"
-      (( ++count ))
-    done; then
-      # return 66: BSD EX_NOINPUT
-      _cmc_err 66 "No screenshots to process: '${INPUT_DIR:A}/'"
+      "$EXIFTOOL" "${(@)exiftool_args}" -- "${(@)pending_screenshots}" \
+        &>>!"$EXIFTOOL_LOG"
+    else
+      _cmc_log INFO 'Processing in parallel'
+
+      integer shard_count=8
+      integer shard_size=$(( (pending_count + shard_count - 1) / shard_count ))
+
+      integer offset
+      local -Ua shard_list
+      for (( i=0; i < shard_count; i++ )); do
+        offset=$(( shard_size * i ))
+        shard_list=( "${(@)pending_screenshots:$offset:$shard_size}" )
+
+        _cmc_log INFO "Shard $(( i + 1 )): Processing ${#shard_list} ${unit}"
+
+        (
+          "$EXIFTOOL" "${(@)exiftool_args}" -- "${(@)shard_list}" \
+          &>>!"$EXIFTOOL_LOG"
+        ) &
+      done
+      _cmc_log INFO 'Waiting for all shards to finish'
+      wait
     fi
-    print -l -u $pending_fd -- '-echo3' 'ExifTool Finished' '-stay_open' 'False' '-echo3' 'pahabol'
 
-    local unit=screenshot
-    if (( count > 1 )); then
-      unit+=s
-    fi
-    _cmc_log INFO "Submitted ${count} ${unit} to ExifTool (PID:${et_pid})"
+    print -l -- "${(@)pending_screenshots:t}" >>! "$PROCESSED_LIST"
 
-    local -r archive_name="Screenshots_${current_month}.aar"
     local aa_cmd=archive
-    if [[ -f $archive_name ]]; then
-      aa_cmd=update
-    fi
-
-    _cmc_log INFO 'Archiving original files...'
+    if [[ -f $archive_name ]]; then aa_cmd=update; fi
+    _cmc_log INFO 'Archiving originals'
     "$AA" $aa_cmd -v -a lz4 -d "$INPUT_DIR" -o "${OUTPUT_DIR}/${archive_name}"\
       -include-path-list "$PROCESSED_LIST" &>>!"$AA_LOG" || \
       _cmc_err 73 "Apple Archive Failed: ${(j: ⏎ :)${(f)mapfile[$AA_LOG]}}"
       # return 73: BSD EX_CANTCREAT
-
-    wait $et_pid || true
   } always {
     integer -r status_code=$?
-
-    exec {pending_fd}>&-
-    exec {processed_fd}>&-
 
     _cmc_log DEBUG "Status Code: ${status_code}"
 
     if (( status_code == 0 )); then
-      local -Ua processed
-      processed=( "${(@)${(f)mapfile[$PROCESSED_LIST]}/#/${INPUT_DIR:A}/}" )
-      rm -f "${(@)processed}"
+      local -Ua processed_screenshots
+      processed_screenshots=( "${(@)${(f)mapfile[$PROCESSED_LIST]}/#/${INPUT_DIR:A}/}" )
+      rm -f "${(@)processed_screenshots}"
 
-      _cmc_log INFO "Processed ${count} ${unit}"
+      _cmc_log INFO "Processed ${pending_count} ${unit}"
     elif (( status_code > 0 )); then
       _cmc_err $status_code "An error occurred during processing"
 

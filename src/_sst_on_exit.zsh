@@ -1,5 +1,5 @@
 _sst_on_exit() {
-  _cmc_log DEBUG 'Moving temporary logs to system log'
+  _cmc_log DEBUG 'Logging to system log'
 
   exec {log_fd}>&-
 
