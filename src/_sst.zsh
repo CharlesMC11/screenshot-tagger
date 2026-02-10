@@ -69,13 +69,14 @@ _sst() {
     _cmc_log DEBUG "Status Code: ${status_code}"
 
     if (( status_code == 0 )); then
-      : >!"$PENDING_LIST" >!"$EXIFTOOL_LOG"
-
-      # rm -f "${(f)${mapfile[${TMPDIR}/processed.txt]}}" || \
-      #   _cmc_log WARN "Failed to remove original screenshots"
+      local -Ua processed
+      processed=( "${(@)${(f)mapfile[$PROCESSED_LIST]}/#/${INPUT_DIR:A}/}" )
+      rm -f "${(@)processed}"
 
       _cmc_log INFO "Processed ${count} ${unit}"
     elif (( status_code > 0 )); then
+      _cmc_err $status_code "An error occurred during processing"
+
       kill $et_pid 2>/dev/null
       return $status_code
     fi
