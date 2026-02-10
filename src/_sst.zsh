@@ -62,8 +62,8 @@ _sst() {
     local aa_cmd=archive
     if [[ -f $archive_name ]]; then aa_cmd=update; fi
     _cmc_log INFO 'Archiving originals'
-    "$AA" $aa_cmd -v -a lz4 -d "$INPUT_DIR" -o "${OUTPUT_DIR}/${archive_name}"\
-      -include-path-list "$PROCESSED_LIST" &>>!"$AA_LOG" || \
+    "$AA" $aa_cmd -v -d "$INPUT_DIR" -o "${OUTPUT_DIR}/${archive_name}" -a lz4 \
+      -t 8 -include-path-list "$PROCESSED_LIST" &>>!"$AA_LOG" || \
       _cmc_err 73 "Apple Archive Failed: ${(j: ⏎ :)${(f)mapfile[$AA_LOG]}}"
       # return 73: BSD EX_CANTCREAT
   } always {
