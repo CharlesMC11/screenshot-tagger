@@ -37,12 +37,12 @@ _sst() {
     else
       _cmc_log INFO 'Processing in parallel'
 
-      integer shard_count=8
-      integer shard_size=$(( (pending_count + shard_count - 1) / shard_count ))
+      integer shard_size=$(( (pending_count + PERFORMANCE_CORE_COUNT - 1) / \
+        PERFORMANCE_CORE_COUNT ))
 
       integer offset
       local -Ua shard_list
-      for (( i=0; i < shard_count; i++ )); do
+      for (( i=0; i < PERFORMANCE_CORE_COUNT; i++ )); do
         offset=$(( shard_size * i ))
         shard_list=( "${(@)pending_screenshots:$offset:$shard_size}" )
 
@@ -63,7 +63,8 @@ _sst() {
     if [[ -f $archive_name ]]; then aa_cmd=update; fi
     _cmc_log INFO 'Archiving originals'
     "$AA" $aa_cmd -v -d "$INPUT_DIR" -o "${OUTPUT_DIR}/${archive_name}" -a lz4 \
-      -t 8 -include-path-list "$PROCESSED_LIST" &>>!"$AA_LOG" || \
+      -t $PERFORMANCE_CORE_COUNT -include-path-list "$PROCESSED_LIST" \
+      &>>!"$AA_LOG" || \
       _cmc_err 73 "Apple Archive Failed: ${(j: ⏎ :)${(f)mapfile[$AA_LOG]}}"
       # return 73: BSD EX_CANTCREAT
   } always {

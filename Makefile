@@ -43,6 +43,7 @@ PLIST_PATH				:= $(HOME)/Library/LaunchAgents/$(PLIST_NAME)
 SCREENCAPTURE_PREF		:= com.apple.screencapture location
 HW_MODEL				:= $(shell system_profiler SPHardwareDataType | \
 							sed -En 's/^.*Model Name: //p')
+PERFORMANCE_CORE_COUNT	:= $(shell sysctl -n hw.perflevel0.physicalcpu)
 OS_VER					:= $(shell sw_vers --productVersion)
 EXECUTION_DELAY			:=0.2
 export THROTTLE_INTERVAL:=3
@@ -71,6 +72,7 @@ SED_REPLACE				:= -e 's|@@ZSH@@|$(ZSH)|g' \
 							-e 's|@@EXIFTOOL_LOG@@|$(EXIFTOOL_LOG)|g' \
 							-e 's|@@SYSTEM_LOG@@|$(SYSTEM_LOG)|g' \
 							-e 's|@@HW_MODEL@@|$(HW_MODEL)|g' \
+							-e 's|@@PERFORMANCE_CORE_COUNT@@|$(PERFORMANCE_CORE_COUNT)|g' \
 							-e 's|@@OS_VER@@|$(OS_VER)|g' \
 							-e 's|@@EXECUTION_DELAY@@|$(EXECUTION_DELAY)|g'
 
