@@ -15,12 +15,13 @@ AUTHOR					:= charlesmc
 SERVICE_NAME			:= sst
 RDNN					:= me.$(AUTHOR).$(SERVICE_NAME)
 
-BUILD_DIR				:= ./build
-CC						:= clang
-COMMON_FLAGS			:= -arch arm64 -O2 -Os -flto -DNDEBUG
-CFLAGS					:= -std=c23 -Wall -Wextra -Wpedantic $(COMMON_FLAGS)
+# Compiler & Flags
+CC						:= xcrun clang
+ARCH_FLAGS				:= -arch arm64
+COMMON_FLAGS			:= $(ARCH_FLAGS) -O2 -Os -flto=thin -DNDEBUG -mbranch-protection=standard
+CFLAGS					:= -std=c23 -Wall -Wextra -Wpedantic $(COMMON_FLAGS) -MMD -MP
 ASFLAGS					:= $(COMMON_FLAGS)
-LDFLAGS					:= -Wl,-S -Wl,-dead_strip
+LDFLAGS					:= -Wl,-S -Wl,-dead_strip, -Wl,-no_warn_duplicate_libraries
 
 # Primary Paths
 ROOT_DIR				:= /Volumes/Workbench
@@ -67,39 +68,31 @@ EXECUTION_DELAY			:=0.2
 export THROTTLE_INTERVAL:=3
 
 # Source Files
-FUNC_SRCS				:= $(wildcard src/_*.zsh) $(wildcard lib/*.zsh)
+BUILD_DIR				:= ./build
+OBJ_DIR					:= ./obj
+SRC_DIR					:= ./src
+FUNC_SRC_DIR			:= $(SRC_DIR)/functions
+NATIVE_SRC_DIR			:= $(SRC_DIR)/native
+
+FUNC_SRCS				:= $(wildcard $(FUNC_SRC_DIR)/_*.zsh)
+C_SRCS					:= $(NATIVE_SRC_DIR)/cmc_ls_images.c
+ASM_SRCS				:= $(NATIVE_SRC_DIR)/has_image_magic.s
+OBJS					:= $(OBJ_DIR)/cmc_ls_images.o \
+							$(OBJ_DIR)/has_image_magic.o
 
 # Commands
 INSTALL					:= install -pv -m 755
 SED_DELETE_WHITESPACE	:= -e '/^[[:space:]]*\#[^!]/d' -e '/^[[:space:]]*$$/d'
-SED_REPLACE				:= -e 's|@@ZSH@@|$(ZSH)|g' \
-							-e 's|@@AA@@|$(AA)|g' \
-							-e 's|@@EXIFTOOL@@|$(EXIFTOOL)|g' \
-							-e 's|@@OSASCRIPT@@|$(OSASCRIPT)|g' \
-							-e 's|@@SERVICE_NAME@@|$(SERVICE_NAME)|g' \
-							-e 's|@@FUNC_DIR@@|$(FUNC_DIR)|g' \
-							-e 's|@@TEMP_DIR@@|$(TEMP_DIR)|g ' \
-							-e 's|@@INPUT_DIR@@|$(INPUT_DIR)|g' \
-							-e 's|@@OUTPUT_DIR@@|$(OUTPUT_DIR)|g' \
-							-e 's|@@LOCK_PATH@@|$(LOCK_PATH)|g' \
-							-e 's|@@ARG_FILES_DIR@@|$(ARG_FILES_DIR)|g' \
-							-e 's|@@PENDING_LIST@@|$(PENDING_LIST)|g' \
-							-e 's|@@PROCESSED_LIST@@|$(PROCESSED_LIST)|g' \
-							-e 's|@@LOG_FILE@@|$(LOG_FILE)|g' \
-							-e 's|@@AA_LOG@@|$(AA_LOG)|g' \
-							-e 's|@@EXIFTOOL_LOG@@|$(EXIFTOOL_LOG)|g' \
-							-e 's|@@SYSTEM_LOG@@|$(SYSTEM_LOG)|g' \
-							-e 's|@@REPLACEMENT_PATTERN@@|$(REPLACEMENT_PATTERN)|g' \
-							-e 's|@@DATETIME_REPLACEMENT_RE@@|$(DATETIME_REPLACEMENT_RE)|g' \
-							-e 's|@@FILENAME_REPLACEMENT_RE@@|$(FILENAME_REPLACEMENT_RE)|g' \
-							-e 's|@@HW_MODEL@@|$(HW_MODEL)|g' \
-							-e 's|@@PERFORMANCE_CORE_COUNT@@|$(PERFORMANCE_CORE_COUNT)|g' \
-							-e 's|@@OS_VER@@|$(OS_VER)|g' \
-							-e 's|@@EXECUTION_DELAY@@|$(EXECUTION_DELAY)|g'
-
+SED_REPLACE_KEYS		:= ZSH AA EXIFTOOL OSASCRIPT SERVICE_NAME FUNC_DIR \
+							TEMP_DIR INPUT_DIR OUTPUT_DIR LOCK_PATH \
+							ARG_FILES_DIR PENDING_LIST PROCESSED_LIST LOG_FILE \
+							AA_LOG EXIFTOOL_LOG SYSTEM_LOG REPLACEMENT_PATTERN \
+							DATETIME_REPLACEMENT_RE FILENAME_REPLACEMENT_RE \
+							HW_MODEL PERFORMANCE_CORE_COUNT OS_VER EXECUTION_DELAY
+SED_REPLACE				:= $(foreach k,$(SED_REPLACE_KEYS),-e 's|@@$(k)@@|$($(k))|g')
 UNINSTALLER				:= $(BIN_DIR)/uninstall
 
-.PHONY: all install start stop uninstall clean status open-log clean-log check-ram-disk
+.PHONY: all install build start stop uninstall clean status open-log clean-log check-ram-disk
 
 all: start
 
@@ -110,20 +103,38 @@ check-ram-disk:
 		exit 78; \
 	fi
 
-install: $(BUILD_DIR)/$(AGENT_NAME) $(BUILD_DIR)/cmc_ls_images \
-		$(BUILD_DIR)/functions.zwc $(BUILD_DIR)/$(PLIST_NAME) $(BUILD_DIR)/uninstall \
-		| $(TEMP_DIR) $(INPUT_DIR) $(LOG_DIR)
-	@$(INSTALL) $(BUILD_DIR)/$(AGENT_NAME) $(BIN_DIR)/
-	@$(INSTALL) $(BUILD_DIR)/functions.zwc $(BIN_DIR)/
-	@for f in $(FUNC_SRCS); do $(INSTALL) "$$f" "$(FUNC_DIR)/$${f:t:r}"; done
-	@$(INSTALL) $(BUILD_DIR)/cmc_ls_images $(BIN_DIR)/
-	@$(INSTALL) $(BUILD_DIR)/$(PLIST_NAME) $(PLIST_PATH)
-	@$(INSTALL) $(BUILD_DIR)/uninstall $(BIN_DIR)/
+# Build
 
-$(TEMP_DIR) $(INPUT_DIR) $(LOG_DIR):
-	mkdir -p "$@"
+-include $(OBJS:.o=.d)
 
-$(BUILD_DIR)/uninstall: $(CONFIGS) | $(BIN_DIR)/.dirstamp
+build: $(BUILD_DIR)/$(AGENT_NAME) $(BUILD_DIR)/cmc_ls_images \
+		$(BUILD_DIR)/functions.zwc $(BUILD_DIR)/$(PLIST_NAME) \
+		$(BUILD_DIR)/uninstall
+
+$(BUILD_DIR)/$(AGENT_NAME): $(SRC_DIR)/$(AGENT_NAME).zsh $(CONFIGS)
+	@print -- "Installing '$<' to '$(@D)'"
+	@sed $(SED_REPLACE) "$<" >! "$@"
+	@chmod 755 "$@"
+	@zcompile -U "$@"
+
+$(BUILD_DIR)/functions.zwc: $(FUNC_SRCS)
+	@print -- "Installing functions in '$(<D)' to '$(@D)'"
+	@zcompile -U $@ $^
+
+$(BUILD_DIR)/cmc_ls_images: $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+
+$(OBJ_DIR)/%.o: $(NATIVE_SRC_DIR)/%.c | $(OBJ_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJ_DIR)/%.o: $(NATIVE_SRC_DIR)/%.s | $(OBJ_DIR)
+	$(CC) $(ASFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/$(PLIST_NAME): $(PLIST_TEMPLATE) $(CONFIGS)
+	@print -- "Installing '$<' to '$(@D)'"
+	@content="$$(<$<)"; print -r -- "$${(e)content}" >| "$@"
+
+$(BUILD_DIR)/uninstall: $(CONFIGS)
 	@print -l -- \
 		'#!/bin/sh' \
 		'launchctl bootout gui/$(shell id -u) "$(PLIST_PATH)"' \
@@ -133,33 +144,22 @@ $(BUILD_DIR)/uninstall: $(CONFIGS) | $(BIN_DIR)/.dirstamp
 		'killall SystemUIServer' > "$@"
 	@chmod 755 "$@"
 
-$(BUILD_DIR)/%: src/%.zsh $(CONFIGS) | $(BIN_DIR)/.dirstamp
-	@print -- "Installing '$<' to '$(@D)'"
-	@sed $(SED_REPLACE) "$<" >! "$@"
-	@chmod 755 "$@"
-	@zcompile -U "$@"
+$(BUILD_DIR) $(OBJ_DIR):
+	mkdir -p "$@"
 
-$(BUILD_DIR)/cmc_ls_images: $(BUILD_DIR)/has_image_magic.o \
-		$(BUILD_DIR)/cmc_ls_images.o | $(BUILD_DIR)
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+# Lifecycle
 
-$(BUILD_DIR)/%.o: ./ext/%.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/%.o: ./ext/%.s | $(BUILD_DIR)
-	$(CC) $(ASFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/functions.zwc: $(FUNC_SRCS) $(CONFIGS) | $(FUNC_DIR)/.dirstamp
-	@print -- "Installing functions in '$(<D)' to '$(@D)'"
-	@zcompile -U "$@" $(FUNC_SRCS)
+install: check-ram-disk build | $(BIN_DIR)/.dirstamp $(FUNC_DIR)/.dirstamp $(TEMP_DIR) $(INPUT_DIR) $(LOG_DIR)
+	@$(INSTALL) $(BUILD_DIR)/$(AGENT_NAME) $(BIN_DIR)/
+	@$(INSTALL) $(BUILD_DIR)/functions.zwc $(BIN_DIR)/
+	@for f in $(FUNC_SRCS); do $(INSTALL) "$$f" "$(FUNC_DIR)/$${f:t:r}"; done
+	@$(INSTALL) $(BUILD_DIR)/cmc_ls_images $(BIN_DIR)/
+	@$(INSTALL) $(BUILD_DIR)/$(PLIST_NAME) $(PLIST_PATH)
+	@$(INSTALL) $(BUILD_DIR)/uninstall $(BIN_DIR)/
 
 %/.dirstamp:
 	@if [[ -e "$(@D)" && ! -d "$(@D)" ]]; then rm "$(@D)"; fi
 	@mkdir -p "$(@D)" && touch "$@"
-
-$(BUILD_DIR)/$(PLIST_NAME): $(PLIST_TEMPLATE) $(CONFIGS)
-	@print -- "Installing '$<' to '$(@D)'"
-	@content="$$(<$<)"; print -r -- "$${(e)content}" >| "$@"
 
 start: install
 	@-launchctl bootout gui/$(shell id -u) "$(PLIST_PATH)" 2>/dev/null || true
