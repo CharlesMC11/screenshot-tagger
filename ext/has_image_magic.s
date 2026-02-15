@@ -2,6 +2,7 @@
 .globl _has_image_magic
 .p2align 2
 
+// TODO: Use libSystem
 _has_image_magic:
 	stp	x29, x30, [sp, #-32]!
 	mov	x29, sp

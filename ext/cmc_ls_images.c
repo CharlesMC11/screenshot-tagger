@@ -57,6 +57,7 @@ int is_image(const struct dirent* entry) {
   return has_image_magic(absolute_path);
 }
 
+// TODO: Use natural sort
 /*!
  * Compare the names of two directory entries, ensuring `name 1.ext` comes after
  * `name.ext`.
