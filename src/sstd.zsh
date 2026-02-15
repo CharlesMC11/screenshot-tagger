@@ -15,7 +15,7 @@ readonly OSASCRIPT='@@OSASCRIPT@@'
 readonly INPUT_DIR='@@INPUT_DIR@@'
 readonly OUTPUT_DIR='@@OUTPUT_DIR@@'
 
-readonly TMPDIR='@@TMPDIR@@'
+readonly TMPDIR='@@TEMP_DIR@@'
 readonly LOCK_PATH='@@LOCK_PATH@@'
 readonly ARG_FILES_DIR='@@ARG_FILES_DIR@@'
 readonly PENDING_LIST='@@PENDING_LIST@@'
@@ -50,7 +50,7 @@ if zsystem flock -t 0 -f $fd "$LOCK_PATH"; then
 
   sleep $EXECUTION_DELAY  # Give time for all screenshots to be written to disk
 
-  cmc_ls_images "${INPUT_DIR}/" | _sst
+  "${0:A:h}/cmc_ls_images" "${INPUT_DIR}/" | _sst
   _sst_notify $?
 else
   # return 75: BSD EX_TEMPFAIL

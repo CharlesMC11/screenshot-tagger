@@ -17,7 +17,10 @@ RDNN					:= me.$(AUTHOR).$(SERVICE_NAME)
 
 BUILD_DIR				:= ./build
 CC						:= clang
-CFLAGS					:= -std=c23 -Wall -Wextra -Wpedantic -O2 -Os
+COMMON_FLAGS			:= -arch arm64 -O2 -Os -flto -DNDEBUG
+CFLAGS					:= -std=c23 -Wall -Wextra -Wpedantic $(COMMON_FLAGS)
+ASFLAGS					:= $(COMMON_FLAGS)
+LDFLAGS					:= -Wl,-S -Wl,-dead_strip
 
 # Primary Paths
 ROOT_DIR				:= /Volumes/Workbench
@@ -27,14 +30,14 @@ export INPUT_DIR		:= $(ROOT_DIR)/Screenshots
 OUTPUT_DIR				:= $(HOME)/MyFiles/Pictures/Screenshots
 
 # Transient Paths
-TMPDIR					:= $(BIN_DIR)/tmp
-LOCK_PATH				:= $(TMPDIR)/$(SERVICE_NAME).lock
+TEMP_DIR				:= $(BIN_DIR)/tmp
+LOCK_PATH				:= $(TEMP_DIR)/$(SERVICE_NAME).lock
 ARG_FILES_DIR			:= $(HOME)/.local/share/exiftool
-PENDING_LIST			:= $(TMPDIR)/pending.fifo
-PROCESSED_LIST			:= $(TMPDIR)/processed.txt
-LOG_FILE				:= $(TMPDIR)/$(SERVICE_NAME).log
-AA_LOG					:= $(TMPDIR)/aa.log
-EXIFTOOL_LOG			:= $(TMPDIR)/exiftool.log
+PENDING_LIST			:= $(TEMP_DIR)/pending.fifo
+PROCESSED_LIST			:= $(TEMP_DIR)/processed.txt
+LOG_FILE				:= $(TEMP_DIR)/$(SERVICE_NAME).log
+AA_LOG					:= $(TEMP_DIR)/aa.log
+EXIFTOOL_LOG			:= $(TEMP_DIR)/exiftool.log
 export SYSTEM_LOG		:= $(HOME)/Library/Logs/$(RDNN).log
 
 # Tool Configuration
@@ -75,7 +78,7 @@ SED_REPLACE				:= -e 's|@@ZSH@@|$(ZSH)|g' \
 							-e 's|@@OSASCRIPT@@|$(OSASCRIPT)|g' \
 							-e 's|@@SERVICE_NAME@@|$(SERVICE_NAME)|g' \
 							-e 's|@@FUNC_DIR@@|$(FUNC_DIR)|g' \
-							-e 's|@@TMPDIR@@|$(TMPDIR)|g ' \
+							-e 's|@@TEMP_DIR@@|$(TEMP_DIR)|g ' \
 							-e 's|@@INPUT_DIR@@|$(INPUT_DIR)|g' \
 							-e 's|@@OUTPUT_DIR@@|$(OUTPUT_DIR)|g' \
 							-e 's|@@LOCK_PATH@@|$(LOCK_PATH)|g' \
@@ -107,37 +110,22 @@ check-ram-disk:
 		exit 78; \
 	fi
 
-$(BUILD_DIR)/cmc_ls_images: $(BUILD_DIR)/has_image_magic.o $(BUILD_DIR)/cmc_ls_images.o
-	$(CC) $^ -o $@
+install: $(BUILD_DIR)/$(AGENT_NAME) $(BUILD_DIR)/cmc_ls_images \
+		$(BUILD_DIR)/functions.zwc $(BUILD_DIR)/$(PLIST_NAME) $(BUILD_DIR)/uninstall \
+		| $(TEMP_DIR) $(INPUT_DIR) $(LOG_DIR)
+	@$(INSTALL) $(BUILD_DIR)/$(AGENT_NAME) $(BIN_DIR)/
+	@$(INSTALL) $(BUILD_DIR)/functions.zwc $(BIN_DIR)/
+	@for f in $(FUNC_SRCS); do $(INSTALL) "$$f" "$(FUNC_DIR)/$${f:t:r}"; done
+	@$(INSTALL) $(BUILD_DIR)/cmc_ls_images $(BIN_DIR)/
+	@$(INSTALL) $(BUILD_DIR)/$(PLIST_NAME) $(PLIST_PATH)
+	@$(INSTALL) $(BUILD_DIR)/uninstall $(BIN_DIR)/
 
-$(BUILD_DIR)/%.o: ./ext/%.c | $(BUILD_DIR)/.dirstamp
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(TMPDIR) $(INPUT_DIR) $(LOG_DIR):
+$(TEMP_DIR) $(INPUT_DIR) $(LOG_DIR):
 	mkdir -p "$@"
 
-$(BIN_DIR)/%: src/%.zsh $(CONFIGS) | $(BIN_DIR)/.dirstamp
-	@print -- "Installing '$<' to '$(@D)'"
-	@sed $(SED_REPLACE) "$<" >! "$@"
-	@chmod 755 "$@"
-	@zcompile -U "$@"
-
-$(FUNC_DIR).zwc: $(FUNC_SRCS) $(CONFIGS) | $(FUNC_DIR)/.dirstamp
-	@print -- "Installing functions in '$(<D)' to '$(@D)'"
-	@for f in $(FUNC_SRCS); do $(INSTALL) "$$f" "$(FUNC_DIR)/$${f:t:r}"; done
-	@zcompile -U "$@" $(FUNC_SRCS)
-
-%/.dirstamp:
-	@if [[ -e "$(@D)" && ! -d "$(@D)" ]]; then rm "$(@D)"; fi
-	@mkdir -p "$(@D)" && touch "$@"
-
-$(PLIST_PATH): $(PLIST_TEMPLATE) $(CONFIGS)
-	@print -- "Installing '$<' to '$(@D)'"
-	@content="$$(<$<)"; print -r -- "$${(e)content}" >| "$@"
-
-$(UNINSTALLER): $(CONFIGS) | $(BIN_DIR)/.dirstamp
+$(BUILD_DIR)/uninstall: $(CONFIGS) | $(BIN_DIR)/.dirstamp
 	@print -l -- \
-		'#!/usr/bin/env sh' \
+		'#!/bin/sh' \
 		'launchctl bootout gui/$(shell id -u) "$(PLIST_PATH)"' \
 		'rm -f "$(PLIST_PATH)"' \
 		'rm -rf "$(BIN_DIR)"' \
@@ -145,12 +133,37 @@ $(UNINSTALLER): $(CONFIGS) | $(BIN_DIR)/.dirstamp
 		'killall SystemUIServer' > "$@"
 	@chmod 755 "$@"
 
-install: check-ram-disk $(BIN_DIR)/$(AGENT_NAME) $(FUNC_DIR).zwc \
-	$(UNINSTALLER) | $(TMPDIR) $(INPUT_DIR) $(LOG_DIR)
+$(BUILD_DIR)/%: src/%.zsh $(CONFIGS) | $(BIN_DIR)/.dirstamp
+	@print -- "Installing '$<' to '$(@D)'"
+	@sed $(SED_REPLACE) "$<" >! "$@"
+	@chmod 755 "$@"
+	@zcompile -U "$@"
 
-start: $(PLIST_PATH) install
+$(BUILD_DIR)/cmc_ls_images: $(BUILD_DIR)/has_image_magic.o \
+		$(BUILD_DIR)/cmc_ls_images.o | $(BUILD_DIR)
+	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+
+$(BUILD_DIR)/%.o: ./ext/%.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/%.o: ./ext/%.s | $(BUILD_DIR)
+	$(CC) $(ASFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/functions.zwc: $(FUNC_SRCS) $(CONFIGS) | $(FUNC_DIR)/.dirstamp
+	@print -- "Installing functions in '$(<D)' to '$(@D)'"
+	@zcompile -U "$@" $(FUNC_SRCS)
+
+%/.dirstamp:
+	@if [[ -e "$(@D)" && ! -d "$(@D)" ]]; then rm "$(@D)"; fi
+	@mkdir -p "$(@D)" && touch "$@"
+
+$(BUILD_DIR)/$(PLIST_NAME): $(PLIST_TEMPLATE) $(CONFIGS)
+	@print -- "Installing '$<' to '$(@D)'"
+	@content="$$(<$<)"; print -r -- "$${(e)content}" >| "$@"
+
+start: install
 	@-launchctl bootout gui/$(shell id -u) "$(PLIST_PATH)" 2>/dev/null || true
-	launchctl bootstrap gui/$(shell id -u) "$<"
+	launchctl bootstrap gui/$(shell id -u) "$(PLIST_PATH)"
 	defaults write $(SCREENCAPTURE_PREF) -string "$(INPUT_DIR)"
 	@killall SystemUIServer
 
@@ -166,7 +179,8 @@ uninstall: stop
 clean:
 	-rm -f "$(BIN_DIR)"/*.zwc
 	-rm -f "$(FUNC_DIR).zwc"
-	-rm -rf "$(TMPDIR)"/*
+	-rm -fr "$(BUILD_DIR)"/*
+	-rm -rf "$(TEMP_DIR)"/*
 
 status:
 	@launchctl list | grep "$(RDNN)" || print -- "'$(SERVICE_NAME)' is not running."
