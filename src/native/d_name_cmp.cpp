@@ -1,5 +1,6 @@
 #include <dirent.h>
 
+#include <algorithm>
 #include <charconv>
 #include <string_view>
 
@@ -10,8 +11,12 @@ int d_name_cmp(const dirent** d1, const dirent** d2) {
   std::string_view s1{(*d1)->d_name};
   std::string_view s2{(*d2)->d_name};
 
-  if (s1 == s2) return 0;
+  const auto [it1,
+              it2]{std::mismatch(s1.begin(), s1.end(), s2.begin(), s2.end())};
+  if (it1 == s1.end() && it2 == s2.end()) return 0;
 
+  s1.remove_prefix(std::distance(s1.begin(), it1));
+  s2.remove_prefix(std::distance(s2.begin(), it2));
   while (!s1.empty() && !s2.empty()) {
     if ((s1[0] == '.' && s2[0] == ' ') || (s1[0] == ' ' && s2[0] == '.'))
       return s1[0] == '.' ? -1 : 1;
