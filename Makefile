@@ -29,9 +29,9 @@ DEP_FLAGS				:= -MMD -MP
 LDFLAGS					:= -Wl,-S -Wl,-dead_strip, -Wl,-no_warn_duplicate_libraries
 
 COMMON_FLAGS			:= $(ARCH_FLAGS) $(OPT_FLAGS) $(SEC_FLAGS)
-CFLAGS					:= -std=c23  $(WARN_FLAGS) $(COMMON_FLAGS) $(DEP_FLAGS)
-CXXFLAGS				:= -std=c++26 $(WARN_FLAGS) $(COMMON_FLAGS) $(DEP_FLAGS)
-ASFLAGS					:= $(ARCH_FLAGS) $(SEC_FLAGS)
+CFLAGS					:= -std=c23 $(WARN_FLAGS) $(COMMON_FLAGS) $(DEP_FLAGS)
+CXXFLAGS				:= -std=c++26 $(WARN_FLAGS) $(COMMON_FLAGS) $(DEP_FLAGS) -g
+ASFLAGS					:= $(ARCH_FLAGS) $(SEC_FLAGS) -g
 
 # Primary Paths
 ROOT_DIR				:= /Volumes/Workbench
@@ -85,10 +85,11 @@ FUNC_SRC_DIR			:= $(SRC_DIR)/functions
 NATIVE_SRC_DIR			:= $(SRC_DIR)/native
 
 FUNC_SRCS				:= $(wildcard $(FUNC_SRC_DIR)/_*.zsh)
-C_SRCS					:= $(NATIVE_SRC_DIR)/cmc_ls_images.c
-ASM_SRCS				:= $(NATIVE_SRC_DIR)/has_image_magic.s
-OBJS					:= $(OBJ_DIR)/cmc_ls_images.o \
-							$(OBJ_DIR)/has_image_magic.o
+C_SRCS					:= $(wildcard $(NATIVE_SRC_DIR)/*.c)
+CXX_SRCS				:= $(wildcard $(NATIVE_SRC_DIR)/*.cpp)
+ASM_SRCS				:= $(wildcard $(NATIVE_SRC_DIR)/*.s)
+OBJS					:= $(OBJ_DIR)/ls_images.o $(OBJ_DIR)/d_name_cmp.o \
+							$(OBJ_DIR)/is_image.o
 
 # Commands
 INSTALL					:= install -pv -m 755
@@ -132,10 +133,10 @@ $(BUILD_DIR)/functions.zwc: $(FUNC_SRCS)
 	@zcompile -U $@ $^
 
 $(BUILD_DIR)/cmc_ls_images: $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
-$(OBJ_DIR)/%.o: $(NATIVE_SRC_DIR)/%.c | $(OBJ_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+$(OBJ_DIR)/%.o: $(NATIVE_SRC_DIR)/%.cpp | $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(OBJ_DIR)/%.o: $(NATIVE_SRC_DIR)/%.s | $(OBJ_DIR)
 	$(CC) $(ASFLAGS) -c $< -o $@
@@ -187,9 +188,10 @@ uninstall: stop
 	-rm -rf "$(BIN_DIR)"
 
 clean:
+	-rm -fr "$(BUILD_DIR)"/*
+	-rm -fr "$(OBJ_DIR)"/*
 	-rm -f "$(BIN_DIR)"/*.zwc
 	-rm -f "$(FUNC_DIR).zwc"
-	-rm -fr "$(BUILD_DIR)"/*
 	-rm -rf "$(TEMP_DIR)"/*
 
 status:
