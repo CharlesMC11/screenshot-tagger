@@ -15,13 +15,23 @@ AUTHOR					:= charlesmc
 SERVICE_NAME			:= sst
 RDNN					:= me.$(AUTHOR).$(SERVICE_NAME)
 
-# Compiler & Flags
+# Toolchain
 CC						:= xcrun clang
+CXX						:= xcrun clang++
+
 ARCH_FLAGS				:= -arch arm64
-COMMON_FLAGS			:= $(ARCH_FLAGS) -O2 -Os -flto=thin -DNDEBUG -mbranch-protection=standard
-CFLAGS					:= -std=c23 -Wall -Wextra -Wpedantic $(COMMON_FLAGS) -MMD -MP
-ASFLAGS					:= $(COMMON_FLAGS)
+SECURITY_FLAGS			:= -mbranch-protection=standard \
+							-fstack-protector-strong -D_FORTIFY_SOURCE=2
+OPT_FLAGS				:= -O2 -Os -flto=thin -DNDEBUG
+WARN_FLAGS				:= -Wall -Wextra -Wpedantic
+DEP_FLAGS				:= -MMD -MP
+
 LDFLAGS					:= -Wl,-S -Wl,-dead_strip, -Wl,-no_warn_duplicate_libraries
+
+COMMON_FLAGS			:= $(ARCH_FLAGS) $(OPT_FLAGS) $(SEC_FLAGS)
+CFLAGS					:= -std=c23  $(WARN_FLAGS) $(COMMON_FLAGS) $(DEP_FLAGS)
+CXXFLAGS				:= -std=c++26 $(WARN_FLAGS) $(COMMON_FLAGS) $(DEP_FLAGS)
+ASFLAGS					:= $(ARCH_FLAGS) $(SEC_FLAGS)
 
 # Primary Paths
 ROOT_DIR				:= /Volumes/Workbench
