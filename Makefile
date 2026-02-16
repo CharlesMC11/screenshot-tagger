@@ -21,16 +21,16 @@ CXX						:= xcrun clang++
 
 ARCH_FLAGS				:= -arch arm64 -march=native
 SEC_FLAGS				:= -mbranch-protection=standard \
-							-fstack-protector-strong -D_FORTIFY_SOURCE=2
+							-fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIE
 OPT_FLAGS				:= -O2 -Oz -flto=thin -DNDEBUG
 WARN_FLAGS				:= -Wall -Wextra -Wpedantic
 DEP_FLAGS				:= -MMD -MP
 
-LDFLAGS					:= -Wl,-S -Wl,-dead_strip, -Wl,-no_warn_duplicate_libraries
+LDFLAGS					:= -Wl,-S -Wl,-dead_strip, -Wl,-no_warn_duplicate_libraries, -Wl,-pie
 
 COMMON_FLAGS			:= $(ARCH_FLAGS) $(OPT_FLAGS) $(SEC_FLAGS)
 CFLAGS					:= -std=c23 $(WARN_FLAGS) $(COMMON_FLAGS) $(DEP_FLAGS)
-CXXFLAGS				:= -std=c++26 $(WARN_FLAGS) $(COMMON_FLAGS) $(DEP_FLAGS) -g
+CXXFLAGS				:= -std=c++26 $(WARN_FLAGS) $(COMMON_FLAGS) $(DEP_FLAGS) -fno-exceptions -fno-rtti
 ASFLAGS					:= $(ARCH_FLAGS) $(SEC_FLAGS) -g
 
 # Primary Paths
