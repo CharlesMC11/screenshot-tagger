@@ -19,10 +19,10 @@ RDNN					:= me.$(AUTHOR).$(SERVICE_NAME)
 CC						:= xcrun clang
 CXX						:= xcrun clang++
 
-ARCH_FLAGS				:= -arch arm64
-SECURITY_FLAGS			:= -mbranch-protection=standard \
+ARCH_FLAGS				:= -arch arm64 -march=native
+SEC_FLAGS				:= -mbranch-protection=standard \
 							-fstack-protector-strong -D_FORTIFY_SOURCE=2
-OPT_FLAGS				:= -O2 -Os -flto=thin -DNDEBUG
+OPT_FLAGS				:= -O2 -Oz -flto=thin -DNDEBUG
 WARN_FLAGS				:= -Wall -Wextra -Wpedantic
 DEP_FLAGS				:= -MMD -MP
 
