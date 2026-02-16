@@ -4,7 +4,7 @@
 #include <charconv>
 #include <string_view>
 
-#include "img_utils.hpp"
+#include "img_utils.h"
 
 extern "C" {
 int d_name_cmp(const dirent** d1, const dirent** d2) {

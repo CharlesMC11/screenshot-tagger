@@ -5,7 +5,7 @@
 
 #include <iostream>
 
-#include "img_utils.hpp"
+#include "img_utils.h"
 
 char g_input_absolute_path[PATH_MAX];
 
