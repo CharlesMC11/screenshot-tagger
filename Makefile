@@ -15,31 +15,6 @@ AUTHOR					:= charlesmc
 SERVICE_NAME			:= sst
 RDNN					:= me.$(AUTHOR).$(SERVICE_NAME)
 
-# Toolchain
-CC						:= xcrun clang
-CXX						:= xcrun clang++
-
-ARCH_FLAGS				:= -arch arm64 -march=native
-SEC_FLAGS				:= -mbranch-protection=standard \
-							-fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIE
-OPT_FLAGS				:= -flto=thin
-WARN_FLAGS				:= -Wall -Wextra -Wpedantic
-DEP_FLAGS				:= -MMD -MP
-
-LDFLAGS					:= -Wl,-S -Wl,-dead_strip, -Wl,-no_warn_duplicate_libraries, -Wl,-pie
-
-DEBUG					?= 0
-ifeq ($(DEBUG), 1)
-	OPT_FLAGS += -g -O0 -DDEBUG_MODE
-else
-	OPT_FLAGS += -O2 -Oz -DNDEBUG
-endif
-
-COMMON_FLAGS			:= $(ARCH_FLAGS) $(OPT_FLAGS) $(SEC_FLAGS)
-CFLAGS					:= -std=c23 $(WARN_FLAGS) $(COMMON_FLAGS) $(DEP_FLAGS)
-CXXFLAGS				:= -std=c++26 $(WARN_FLAGS) $(COMMON_FLAGS) $(DEP_FLAGS) -fno-exceptions -fno-rtti
-ASFLAGS					:= $(ARCH_FLAGS) $(SEC_FLAGS) -g
-
 # Primary Paths
 ROOT_DIR				:= /Volumes/Workbench
 export BIN_DIR			:= $(ROOT_DIR)/$(SERVICE_NAME)
@@ -84,17 +59,9 @@ export THROTTLE_INTERVAL:=3
 
 # Source Files
 BUILD_DIR				:= ./build
-OBJ_DIR					:= ./obj
 SRC_DIR					:= ./src
-FUNC_SRC_DIR			:= $(SRC_DIR)/functions
-NATIVE_SRC_DIR			:= $(SRC_DIR)/native
-
-FUNC_SRCS				:= $(wildcard $(FUNC_SRC_DIR)/_*.zsh)
-C_SRCS					:= $(wildcard $(NATIVE_SRC_DIR)/*.c)
-CXX_SRCS				:= $(wildcard $(NATIVE_SRC_DIR)/*.cpp)
-ASM_SRCS				:= $(wildcard $(NATIVE_SRC_DIR)/*.s)
-OBJS					:= $(OBJ_DIR)/ls_images.o $(OBJ_DIR)/is_image.o \
-							$(OBJ_DIR)/compare_filenames.o
+FUNC_SRC_DIR			:= ./lib
+FUNC_SRCS				:= $(wildcard $(FUNC_SRC_DIR)/*.zsh)
 
 # Commands
 INSTALL					:= install -pv -m 755
@@ -121,9 +88,7 @@ check-ram-disk:
 
 # Build
 
--include $(OBJS:.o=.d)
-
-build: $(BUILD_DIR)/$(AGENT_NAME) $(BUILD_DIR)/cmc_ls_images \
+build: $(BUILD_DIR)/$(AGENT_NAME) \
 		$(BUILD_DIR)/functions.zwc $(BUILD_DIR)/$(PLIST_NAME) \
 		$(BUILD_DIR)/uninstall
 
@@ -136,15 +101,6 @@ $(BUILD_DIR)/$(AGENT_NAME): $(SRC_DIR)/$(AGENT_NAME).zsh $(CONFIGS)
 $(BUILD_DIR)/functions.zwc: $(FUNC_SRCS)
 	@print -- "Installing functions in '$(<D)' to '$(@D)'"
 	@zcompile -U $@ $^
-
-$(BUILD_DIR)/cmc_ls_images: $(OBJS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
-
-$(OBJ_DIR)/%.o: $(NATIVE_SRC_DIR)/%.cpp | $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-$(OBJ_DIR)/%.o: $(NATIVE_SRC_DIR)/%.s | $(OBJ_DIR)
-	$(CC) $(ASFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/$(PLIST_NAME): $(PLIST_TEMPLATE) $(CONFIGS)
 	@print -- "Installing '$<' to '$(@D)'"
@@ -160,7 +116,7 @@ $(BUILD_DIR)/uninstall: $(CONFIGS)
 		'killall SystemUIServer' > "$@"
 	@chmod 755 "$@"
 
-$(BUILD_DIR) $(OBJ_DIR):
+$(BUILD_DIR) $(TEMP_DIR) $(INPUT_DIR) $(LOG_DIR):
 	mkdir -p "$@"
 
 # Lifecycle
@@ -169,7 +125,6 @@ install: check-ram-disk build | $(BIN_DIR)/.dirstamp $(FUNC_DIR)/.dirstamp $(TEM
 	@$(INSTALL) $(BUILD_DIR)/$(AGENT_NAME) $(BIN_DIR)/
 	@$(INSTALL) $(BUILD_DIR)/functions.zwc $(BIN_DIR)/
 	@for f in $(FUNC_SRCS); do $(INSTALL) "$$f" "$(FUNC_DIR)/$${f:t:r}"; done
-	@$(INSTALL) $(BUILD_DIR)/cmc_ls_images $(BIN_DIR)/
 	@$(INSTALL) $(BUILD_DIR)/$(PLIST_NAME) $(PLIST_PATH)
 	@$(INSTALL) $(BUILD_DIR)/uninstall $(BIN_DIR)/
 
@@ -194,7 +149,6 @@ uninstall: stop
 
 clean:
 	-rm -fr "$(BUILD_DIR)"/*
-	-rm -fr "$(OBJ_DIR)"/*
 	-rm -f "$(BIN_DIR)"/*.zwc
 	-rm -f "$(FUNC_DIR).zwc"
 	-rm -rf "$(TEMP_DIR)"/*

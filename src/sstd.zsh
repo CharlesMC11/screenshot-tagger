@@ -36,7 +36,7 @@ float -r EXECUTION_DELAY=@@EXECUTION_DELAY@@
 ################################################################################
 
 fpath=('@@FUNC_DIR@@' "${(@)fpath}")
-autoload -Uz _cmc_log _cmc_err _sst _sst_notify _sst_on_exit zargs
+autoload -Uz _cmc_log _cmc_err cmc_ls_images _sst _sst_notify _sst_on_exit zargs
 
 trap '_sst_on_exit' EXIT INT TERM
 
@@ -50,7 +50,7 @@ if zsystem flock -t 0 -f $fd "$LOCK_PATH"; then
 
   sleep $EXECUTION_DELAY  # Give time for all screenshots to be written to disk
 
-  "${0:A:h}/cmc_ls_images" "${INPUT_DIR}/" | _sst
+  cmc_ls_images "${INPUT_DIR}/" | _sst
   _sst_notify $?
 else
   # return 75: BSD EX_TEMPFAIL
