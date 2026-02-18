@@ -6,8 +6,7 @@
 
 _is_image:
     pacia   x30, sp
-    sub     sp, sp, #32
-    stp     x29, x30, [sp]
+    stp     x29, x30, [sp, #-32]!       // reserve a 16-byte buffer
     mov     x29, sp
 
     // Read file
@@ -71,6 +70,5 @@ _is_image:
     mov     w0, #1
 
 .L_done:
-    ldp     x29, x30, [sp]
-    add     sp, sp, #32
+    ldp     x29, x30, [sp], #32
     retaa
