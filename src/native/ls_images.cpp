@@ -10,8 +10,6 @@
 #include "Scanner.hpp"
 #include "Sorter.hpp"
 
-uint32_t collect_images(const char* dirname, std::vector<std::string>& list);
-
 int main(const int argc, const char* argv[]) {
   char input_absolute_path[PATH_MAX];
 
