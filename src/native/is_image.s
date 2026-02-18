@@ -1,3 +1,11 @@
+/*!
+ * Read the first 12-16 bytes of a file to determine if it belongs to a
+ * supported photographic format
+ * @environment AArch64 (Apple Silicon), macOS ABI
+ * @param x0 (int fd): File descriptor to read from
+ * @return w0 (bool): 1 if file matches PNG, HEIC, JPEG, or TIFF; 0 otherwise
+ */
+
 .section __TEXT,__text,regular,pure_instructions
 .globl _is_image
 .p2align 2
@@ -10,23 +18,22 @@ _is_image:
     mov     x29, sp
 
     // Read file
-    add     x1, sp, #16
-    mov     x2, #16                     // bytes count
+    add     x1, sp, #16                 // load the 16-byte buffer
+    mov     x2, #16                     // read 16 bytes from the file
     bl      _read
 
-    // Check if 12 bytes
-    cmp     x0, #12
+    cmp     x0, #12                     // Check if at least 12 bytes were read
     b.lt   .L_false
 
-    ldr     q0, [sp, #16]               // Load the 12 bytes
+    ldr     q0, [sp, #16]               // Load the file header into SIMD lane
 
     // PNG: 89 50 4E 47 0D 0A 1A 0A
     movz    x1, #0x5089
     movk    x1, #0x474E, lsl #16
     movk    x1, #0x0A0D, lsl #32
     movk    x1, #0x0A1A, lsl #48
-    fmov    d1, x1
-    cmeq    v1.2d, v0.2d, v1.2d
+    fmov    d1, x1                      // Move 64-bit pattern to SIMD lane
+    cmeq    v1.2d, v0.2d, v1.2d         // If bits match, lane becomes all 1s
 
     // HEIF: 'ftypheic' or 'ftypmif1' at offset 4
     ext     v2.16b, v0.16b, v0.16b, #4
