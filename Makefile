@@ -97,7 +97,7 @@ C_SRCS					:= $(wildcard $(NATIVE_SRC_DIR)/*.c)
 CXX_SRCS				:= $(wildcard $(NATIVE_SRC_DIR)/*.cpp)
 ASM_SRCS				:= $(wildcard $(NATIVE_SRC_DIR)/*.s)
 OBJS					:= $(OBJ_DIR)/ls_images.o $(OBJ_DIR)/Signatures.o \
-							$(OBJ_DIR)/Sorter.o
+							$(OBJ_DIR)/Sorter.o $(OBJ_DIR)/Scanner.o
 
 # Commands
 INSTALL					:= install -pv -m 755
