@@ -50,7 +50,7 @@ if zsystem flock -t 0 -f $fd "$LOCK_PATH"; then
 
   sleep $EXECUTION_DELAY  # Give time for all screenshots to be written to disk
 
-  "${0:A:h}/cmc_ls_images" "${INPUT_DIR}/" | _sst
+  "${0:A:h}/photo_ls" "${INPUT_DIR}/" | _sst
   _sst_notify $?
 else
   # return 75: BSD EX_TEMPFAIL

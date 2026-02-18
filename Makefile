@@ -96,7 +96,7 @@ FUNC_SRCS				:= $(wildcard $(FUNC_SRC_DIR)/_*.zsh)
 C_SRCS					:= $(wildcard $(NATIVE_SRC_DIR)/*.c)
 CXX_SRCS				:= $(wildcard $(NATIVE_SRC_DIR)/*.cpp)
 ASM_SRCS				:= $(wildcard $(NATIVE_SRC_DIR)/*.s)
-OBJS					:= $(OBJ_DIR)/ls_images.o $(OBJ_DIR)/Signatures.o \
+OBJS					:= $(OBJ_DIR)/photo_ls.o $(OBJ_DIR)/Signatures.o \
 							$(OBJ_DIR)/Sorter.o $(OBJ_DIR)/Scanner.o
 
 # Commands
@@ -126,7 +126,7 @@ check-ram-disk:
 
 -include $(OBJS:.o=.d)
 
-build: $(BUILD_DIR)/$(AGENT_NAME) $(BUILD_DIR)/cmc_ls_images \
+build: $(BUILD_DIR)/$(AGENT_NAME) $(BUILD_DIR)/photo_ls \
 		$(BUILD_DIR)/functions.zwc $(BUILD_DIR)/$(PLIST_NAME) \
 		$(BUILD_DIR)/uninstall
 
@@ -140,7 +140,7 @@ $(BUILD_DIR)/functions.zwc: $(FUNC_SRCS)
 	@print -- "Installing functions in '$(<D)' to '$(@D)'"
 	@zcompile -U $@ $^
 
-$(BUILD_DIR)/cmc_ls_images: $(OBJS)
+$(BUILD_DIR)/photo_ls: $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $^ -o $@
 
 $(OBJ_DIR)/%.o: $(NATIVE_SRC_DIR)/%.cpp | $(OBJ_DIR)
@@ -163,7 +163,7 @@ $(BUILD_DIR)/uninstall: $(CONFIGS)
 		'killall SystemUIServer' > "$@"
 	@chmod 755 "$@"
 
-$(BUILD_DIR) $(OBJ_DIR):
+$(BUILD_DIR) $(OBJ_DIR) $(TEMP_DIR) $(INPUT_DIR) $(LOG_DIR):
 	mkdir -p "$@"
 
 # Lifecycle
@@ -172,7 +172,7 @@ install: check-ram-disk build | $(BIN_DIR)/.dirstamp $(FUNC_DIR)/.dirstamp $(TEM
 	@$(INSTALL) $(BUILD_DIR)/$(AGENT_NAME) $(BIN_DIR)/
 	@$(INSTALL) $(BUILD_DIR)/functions.zwc $(BIN_DIR)/
 	@for f in $(FUNC_SRCS); do $(INSTALL) "$$f" "$(FUNC_DIR)/$${f:t:r}"; done
-	@$(INSTALL) $(BUILD_DIR)/cmc_ls_images $(BIN_DIR)/
+	@$(INSTALL) $(BUILD_DIR)/photo_ls $(BIN_DIR)/
 	@$(INSTALL) $(BUILD_DIR)/$(PLIST_NAME) $(PLIST_PATH)
 	@$(INSTALL) $(BUILD_DIR)/uninstall $(BIN_DIR)/
 
