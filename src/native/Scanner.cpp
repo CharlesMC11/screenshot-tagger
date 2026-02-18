@@ -5,6 +5,8 @@
 #include <sysexits.h>
 #include <unistd.h>
 
+#include <cstdint>
+
 #include "Signatures.h"
 
 namespace sst::scanner {
@@ -26,7 +28,15 @@ uint32_t collect_images(const char* dirname, std::vector<std::string>& list) {
     int fd{openat(dfd, entry->d_name, O_RDONLY | O_CLOEXEC)};
     if (fd < 0) continue;
 
-    if (sst::signatures::is_image(fd)) {
+    fcntl(fd, F_NOCACHE, 1);
+
+    alignas(16) uint8_t buffer[16];
+    if (read(fd, buffer, sizeof(buffer)) < 12) {
+      close(fd);
+      continue;
+    }
+
+    if (sst::signatures::is_image(buffer)) {
       list.emplace_back(entry->d_name);
     }
     close(fd);

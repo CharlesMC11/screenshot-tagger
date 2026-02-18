@@ -1,11 +1,3 @@
-/*!
- * Read the first 12-16 bytes of a file to determine if it belongs to a
- * supported photographic format
- * @environment AArch64 (Apple Silicon), macOS ABI
- * @param x0 (int fd): File descriptor to read from
- * @return w0 (bool): 1 if file matches PNG, HEIC, JPEG, or TIFF; 0 otherwise
- */
-
 .section __TEXT,__text,regular,pure_instructions
 .globl _is_image
 .p2align 2
@@ -14,19 +6,8 @@
 
 _is_image:
     pacia   x30, sp
-    stp     x29, x30, [sp, #-32]!       // reserve a 16-byte buffer
-    mov     x29, sp
 
-    // Read file
-    add     x1, sp, #16                 // load the 16-byte buffer
-    mov     x2, #16                     // read 16 bytes from the file
-    bl      _read
-
-    cmp     x0, #12                     // Check if at least 12 bytes were read
-    b.lt   .L_false
-
-    ldr     x9, [sp, #16]
-    ldr     w10, [sp, #24]
+    ldp     x9, x10, [x0]
 
     // PNG: 89 50 4E 47 0D 0A 1A 0A
     movz    x11, #0x5089
@@ -77,5 +58,4 @@ _is_image:
     mov     w0, #1
 
 .L_done:
-    ldp     x29, x30, [sp], #32
     retaa
