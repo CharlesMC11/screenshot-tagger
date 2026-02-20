@@ -43,13 +43,14 @@ _is_image:
     movk    x12, #0x6369, lsl #48       // 'ic'
     ccmp    x11, x12, #4, ne
 
-    b.eq    .L_true
+    b.eq    L_true
 
     mov     w0, wzr
     retaa
 
-.L_true:
+L_true:
     mov     w0, #1
     retaa
 
     .cfi_endproc
+    .subsections_via_symbols
