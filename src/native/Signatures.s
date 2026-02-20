@@ -1,8 +1,6 @@
-.section __TEXT,__text,regular,pure_instructions
-.globl _is_image
-.p2align 2
-
-.extern _read
+    .section __TEXT,__text,regular,pure_instructions
+    .globl _is_image
+    .p2align 2
 
 _is_image:
     pacia   x30, sp
