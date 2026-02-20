@@ -3,6 +3,7 @@
     .p2align 2
 
 _is_image:
+    .cfi_startproc
     pacia   x30, sp
 
     ldp     x9, x10, [x0]
@@ -57,3 +58,5 @@ _is_image:
 
 .L_done:
     retaa
+
+    .cfi_endproc
