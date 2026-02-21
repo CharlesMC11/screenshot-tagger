@@ -28,7 +28,8 @@ WARN_FLAGS				:= -Wall -Wextra -Wpedantic
 DEP_FLAGS				:= -MMD -MP
 
 ASFLAGS					:= $(ARCH_FLAGS) $(SEC_FLAGS) -Rpass=asm-processor -x assembler-with-cpp
-LDFLAGS					:= -Wl,-dead_strip -Wl,-no_warn_duplicate_libraries \
+LDFLAGS					:= -framework CoreFoundation -framework CoreServices \
+							-Wl,-dead_strip -Wl,-no_warn_duplicate_libraries \
 							-Wl,-pie
 
 DEBUG					?= 0
@@ -101,7 +102,7 @@ C_SRCS					:= $(wildcard $(NATIVE_SRC_DIR)/*.c)
 CXX_SRCS				:= $(wildcard $(NATIVE_SRC_DIR)/*.cpp)
 ASM_SRCS				:= $(wildcard $(NATIVE_SRC_DIR)/*.s)
 OBJS					:= $(OBJ_DIR)/photo_ls.o $(OBJ_DIR)/Signatures.o \
-							$(OBJ_DIR)/Sorter.o $(OBJ_DIR)/Scanner.o
+							$(OBJ_DIR)/Sorter.o $(OBJ_DIR)/Scanner.o $(OBJ_DIR)/Watcher.o
 
 # Commands
 INSTALL					:= install -pv -m 755
