@@ -1,5 +1,5 @@
 _sst() {
-  : >!"$LOG_FILE" >!"$PROCESSED_LIST" >!"$EXIFTOOL_LOG" >!"$AA_LOG"
+  : >!"$PROCESSED_LIST" >!"$EXIFTOOL_LOG" >!"$AA_LOG"
 
   local buf; sysread buf
   local -Ua pending_screenshots; pending_screenshots=( "${(@)${(f)buf}}" )
@@ -78,5 +78,6 @@ _sst() {
     fi
   }
 
+  _sst_notify $?
   return 0
 }

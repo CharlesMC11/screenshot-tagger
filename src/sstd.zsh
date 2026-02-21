@@ -46,13 +46,13 @@ exec {log_fd}>>!"$LOG_FILE"
 exec {fd}>|"$LOCK_PATH"
 
 if zsystem flock -t 0 -f $fd "$LOCK_PATH"; then
-  _cmc_log INFO "Lock acquired; starting..."
+  _cmc_log INFO "Lock acquired; starting FSEvents watcher"
+  # : >!"$LOG_FILE"
 
-  sleep $EXECUTION_DELAY  # Give time for all screenshots to be written to disk
-
-  "${0:A:h}/photo_ls" "${INPUT_DIR}/" | _sst
-  _sst_notify $?
+  "${0:A:h}/photo_ls" "${INPUT_DIR}/" | while read -r line; do
+    print -l -- "${(@)line}" | _sst
+  done
 else
   # return 75: BSD EX_TEMPFAIL
-  _cmc_err 75 "Execution lock; exiting..."
+  _cmc_err 75 "Daemon already running (Code; $LOCK_PATH)"
 fi

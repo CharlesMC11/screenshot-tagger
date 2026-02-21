@@ -12,13 +12,9 @@
         <key>LC_ALL</key>
         <string>en_US.UTF-8</string>
     </dict>
-    <key>ThrottleInterval</key>
-    <integer>$THROTTLE_INTERVAL</integer>
 
-    <key>WatchPaths</key>
-    <array>
-        <string>$INPUT_DIR</string>
-    </array>
+    <key>KeepAlive</key>
+    <true/>
 
     <key>ProcessType</key>
     <string>Interactive</string>
