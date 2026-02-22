@@ -10,26 +10,39 @@
 #include <string>
 #include <vector>
 
-#include "Scanner.hpp"
+#include "FileMonitor.hpp"
+#include "Inspector.hpp"
+#include "Memory.hpp"
+#include "RuntimeContext.hpp"
+#include "SignalHandler.hpp"
 #include "Sorter.hpp"
-#include "Watcher.hpp"
 
-int main(const int argc, const char* argv[]) {
+int main(const int argc, const char *argv[]) {
   std::cout << "[sstd] Starting daemon..." << std::endl;
+  const char *input_dir{(argc >= 2) ? argv[1] : "."};
 
-  sst::watcher::Watcher watcher{(argc >= 2) ? argv[1] : "."};
+  sst::mem::cf_ptr<CFMutableArrayRef> buffer{
+      CFArrayCreateMutable(nullptr, 0, &kCFTypeArrayCallBacks)};
+
+  std::cout << "[sstd] Running initial scan at '" << input_dir << "'."
+            << std::endl;
+  sst::inspector::scanDirectory(input_dir, buffer.get());
+  sst::sorter::printSorted(buffer.get());
+
+  dispatch_queue_t queue{dispatch_get_main_queue()};
+
+  std::cout << "[sstd] Initializing watcher..." << std::endl;
+  sst::fs::FileMonitor watcher{input_dir, queue, sst::inspector::scanDirectory,
+                               buffer.get()};
   watcher.start();
-  std::cout << "[sstd] Watcher initialized to watch '" << watcher.getPath()
-            << "'." << std::endl;
+  std::cout << "[sstd] Initialized to watch '" << input_dir << "'."
+            << std::endl;
 
-  std::signal(SIGTERM, [](int) {
-    std::cerr << "[sstd] Daemon terminated!" << std::endl;
-    std::exit(EX_OK);
-  });
+  sst::rt::RuntimeContext runtime{watcher, buffer.get(), queue};
 
-  std::cout << "[sstd] Dispatching..." << std::endl;
+  sst::rt::registerSignalHandler(SIGTERM, runtime);
+  sst::rt::registerSignalHandler(SIGINT, runtime);
+
+  std::cout << "[sstd] Dispatching. Press CTRL-C to stop." << std::endl;
   dispatch_main();
-  std::cout << "[sstd] Daemon stopped." << std::endl;
-
-  return EX_OK;
 }

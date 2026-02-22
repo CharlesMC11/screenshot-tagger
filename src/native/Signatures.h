@@ -17,9 +17,9 @@ extern "C" {
  * @returns
  * `true` if `buffer` contains magic bytes from common image formats
  */
-bool has_image_signature(uint8_t buffer[]);
+bool hasImageSignature(uint8_t buffer[]);
 
 #ifdef __cplusplus
-}  // extern "C"
-}  // namespace sst::signatures
+} // extern "C"
+} // namespace sst::signatures
 #endif
